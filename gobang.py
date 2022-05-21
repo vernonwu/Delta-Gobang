@@ -34,15 +34,15 @@ pygame.display.set_caption('五子不行V2')
 # 定义极限
 pinf = float('inf')
 ninf = float('-inf')
-win = int(300000)
-lose = int(-1/2*win)
-# 定义元组到得分的字典.'Y'表示空,1表示黑子,0表示白子
+winconst = int(300000)
+lose = -winconst/1.5
+# 定义元组到得分的字典.'Y'表示空,1表示电脑方,0表示玩家方
 get_tuple_score = {
 
-    (1, 1, 1, 1, 1, 'Y'): win,
-    (1, 1, 1, 1, 1, 0): win,
-    ('Y', 1, 1, 1, 1, 1): win,
-    (0, 1, 1, 1, 1, 1): win,
+    (1, 1, 1, 1, 1, 'Y'): winconst,
+    (1, 1, 1, 1, 1, 0): winconst,
+    ('Y', 1, 1, 1, 1, 1): winconst,
+    (0, 1, 1, 1, 1, 1): winconst,
     ('Y', 1, 1, 1, 1, 'Y'): 35000,
     ('Y', 1, 1, 1, 1, 0): 100,
     (1, 1, 1, 1, 'Y', 0): 100,
@@ -53,16 +53,14 @@ get_tuple_score = {
     ('Y', 1, 1, 1, 'Y', 1): 10,
     ('Y', 1, 1, 1, 'Y', 'Y') : 10,
 
-    (0, 0, 0, 0, 0, 'Y'):  3*lose,
-    (0, 0, 0, 0, 0, 1): 3*lose,
-    ('Y', 0, 0, 0, 0, 0): 3*lose,
-    (1, 0, 0, 0, 0, 0): 3*lose,
     ('Y', 'Y', 0, 0, 0, 'Y'): lose,
     ( 0, 'Y', 0, 0, 0, 'Y'): lose,
     ( 1, 'Y', 0, 0, 0, 'Y'): lose,
+    ('N', 'Y', 0, 0, 0, 'Y'): lose,
     ('Y', 0, 0, 0, 'Y', 0): lose,
     ('Y', 0, 0, 0, 'Y', 1): lose,
-    ('Y', 0, 0, 0, 'Y', 'Y') : lose
+    ('Y', 0, 0, 0, 'Y', 'Y') : lose,
+    ('Y', 0, 0, 0, 'Y','N') :lose
 }
 
 
@@ -372,22 +370,23 @@ def tip(screen, chesslist, color, choose, wincolor, i1, j1, i2, j2, chessindex, 
         pygame.draw.rect(screen, button, [(i1 - 4) * 40 + 15, (j1 - 4) * 40 + 15, 30, 30], 3)
         pygame.draw.rect(screen, button, [(i2 - 4) * 40 + 15, (j2 - 4) * 40 + 15, 30, 30], 3)
 
-def alphabeta(board,depth,alpha,beta,player): # 人工智能走子
+def alphabeta(board,depth,alpha,beta,color,computercolor): # 人工智能走子
     if depth == 0:
-        return get_score(board)
-    if player: # 当前是电脑方
+        return get_score(board,computercolor)
+    if color == computercolor: # 当前是电脑方
         maxEval=ninf
         for action in actions(board):
             tmpboard = copy.deepcopy(board)
-            tmpboard[action[0]][action[1]] = 1
+            tmpboard[action[0]][action[1]] = int(color)
 
-            # # 特殊情况，赢了
-            # if win(tmpboard,action[0],action[1]):
-            #     if depth == 3:
-            #         return action
-            #     else:
-            #         return pinf
-            evaluate = alphabeta(tmpboard,depth-1,alpha,beta,False) # 将position的child赋给eval。传参时，处理的子树会获知[已处理子树的根节点的取值信息]。
+            # 特殊情况，赢了
+            if win(tmpboard,action[0],action[1]):
+                print ('oh yes!')
+                if depth == 3:
+                    return action
+                else:
+                    return pinf
+            evaluate = alphabeta(tmpboard,depth-1,alpha,beta,not color,computercolor) # 将position的child赋给eval。传参时，处理的子树会获知[已处理子树的根节点的取值信息]。
             if evaluate == None:
                 continue
             maxEval = max(evaluate,maxEval) 
@@ -397,6 +396,7 @@ def alphabeta(board,depth,alpha,beta,player): # 人工智能走子
             if beta <= alpha: # 如果在某个节点处，对方的最小值小于我方最大，那么对面肯定不会选这一支（因为传的alphabeta值>=alpha）,剪掉这一action.
                 break
         if depth == 3: # 如果是最大深度，则返回最优选择
+            print(maxEval)
             return bestAct
         else: # 否则继续搜索
             return maxEval
@@ -404,18 +404,18 @@ def alphabeta(board,depth,alpha,beta,player): # 人工智能走子
         minEval=pinf
         for action in actions(board):
             tmpboard = copy.deepcopy(board)
-            tmpboard[action[0]][action[1]] = 0
+            tmpboard[action[0]][action[1]] = int(color)
 
             if win(tmpboard,action[0],action[1]):
+                print ('oh no!')
                 return ninf
 
-            else:
-                evaluate = alphabeta(tmpboard,depth-1,alpha,beta,True)
-                minEval = min(evaluate,minEval)
-                beta = min(beta,evaluate)
-                if beta <= alpha:
-                    break
-            return minEval
+            evaluate = alphabeta(tmpboard,depth-1,alpha,beta,not color,computercolor)
+            minEval = min(evaluate,minEval)
+            beta = min(beta,evaluate)
+            if beta <= alpha:
+                break
+        return minEval
 
 def actions(board):
     """返回当前board的所有可能的子树.将棋盘中所有距离已有棋子2格之内的点加入actions中.
@@ -424,18 +424,28 @@ def actions(board):
     actions = set()
     for i in range(4,19):
         for j in range(4,19):
-            if board[i][j] != 'Y':
+            if board[i][j] ==0 or board[i][j] == 1:
                 for k in range(max(4,i-2),min(i+3,19)):
                     for l in range(max(4,j-2),min(j+3,19)):
                         if board[k][l] == 'Y':
                             actions.add((k,l))
+
     return actions
     
 
-def get_score(chesslist):
+def get_score(chesslist,color):
     """计算当前局面下的总得分，遍历整个棋盘,将所有六元组的得分之和返回. 1 代表电脑方, 0 代表玩家方.
     """
-    total_score = int('0')
+    total_score = int(0)
+
+    if color == 0:
+    # 翻转棋盘上的0和1 （因为tuple设置原因）
+        for i in range(4,19):
+            for j in range(4,19):
+                if chesslist[i][j] == 0:
+                    chesslist[i][j] = 1
+                elif chesslist[i][j] == 1:
+                    chesslist[i][j] = 0
     # 分别计算横、竖、左下、右下四个方向的五元组
     for i in range(4,19):
         for j in range(4,19):
@@ -444,48 +454,23 @@ def get_score(chesslist):
                 hori_tuple = tuple(chesslist[i][j+k] for k in range(6))
                 if hori_tuple in get_tuple_score:
                     total_score+=get_tuple_score[hori_tuple]
-                else:
-                    if hori_tuple.count(0) == 2 and hori_tuple.count(1) <=1:
-                        total_score -= 100
+
             if i+5 in range(4,19):
                 verti_tuple = tuple(chesslist[i+k][j] for k in range(6))
                 if verti_tuple in get_tuple_score:
-                    total_score+=get_tuple_score[verti_tuple]
-                else:
-                    if hori_tuple.count(0) == 2 and hori_tuple.count(1) <= 1:
-                        total_score -= 100
+                    total_score += get_tuple_score[verti_tuple]
 
             if i+5 in range(4,19) and j+5 in range(4,19):
                 left_tuple = tuple(chesslist[i+k][j+k] for k in range(6))
                 if left_tuple in get_tuple_score:
-                    total_score+=1
-                else:
-                    if hori_tuple.count(0) == 2 and hori_tuple.count(1) <= 1:
-                        total_score -= 100
+                    total_score+= get_tuple_score[left_tuple]
+                        
             if i+5 in range(4,19) and j-5 in range(4,19):
                 right_tuple = tuple(chesslist[i+k][j-k] for k in range(6))
                 if right_tuple in get_tuple_score:
                     total_score+=get_tuple_score[right_tuple]
-                else:
-                    if hori_tuple.count(0) == 2 and hori_tuple.count(1) <= 1:
-                        total_score -= 100
 
     return total_score
-
-def max_score(chesslist, scorelist):
-    """求出得分最高的点
-
-    筛选出已经落子的位置,未落子部分最大值
-    """
-    mintemp = 0
-    a = []
-    for i in range(len(scorelist[:][0])):
-        for j in range(len(scorelist)):
-            if chesslist[i][j] == 'Y' and scorelist[i][j] != [] and scorelist[i][j] > mintemp:
-                mintemp = scorelist[i][j]
-                a = [i, j]
-    return a
-
 
 def win(lst,x,y):
     """判断是否胜利，只要判断(i,j)附近是否有五子连珠即可
@@ -524,6 +509,7 @@ def key_control(screen, mode):
         color = 0
     else:
         color = 1
+    computerColor = not color
     tip(screen, lst, color, mode,wincolor, i_temp1, j_temp1, i_temp2, j_temp2, chessindex, index)
     if choose_turn_result: # 如果电脑先手（初始值由choose_turn得出）
         lst[11][11] = color
@@ -561,14 +547,14 @@ def key_control(screen, mode):
                             # 将电脑方操作放在了这里，是为了防止误触。即当人类方落子无效时，电脑方便不会行动。
                             if not mode and running:
                                 print ("Calculating next move...")
-                                a = alphabeta(lst,3,ninf,pinf,True)
+                                a = alphabeta(lst,3,ninf,pinf,computerColor,computerColor)
                                 repent = True
-                                draw_chessman(a[0], a[1], screen, int(not color))
+                                draw_chessman(a[0], a[1], screen, int(computerColor))
                                 play_chess_sound.play(0)
-                                lst[a[0]][a[1]] = int(not color)
+                                lst[a[0]][a[1]] = int(computerColor)
                                 i_temp2 = a[0]
                                 j_temp2 = a[1]
-                                wincolor = int(not color)
+                                wincolor = int(computerColor)
                                 chessindex[a[0]][a[1]] = index
                                 index += 1
                                 if win(lst,a[0],a[1]):
@@ -600,7 +586,7 @@ def key_control(screen, mode):
 def main():
     # 定义全局变量
     global background, checkerboard, button, order, lst, score, running, background_jpg, wincolor, i_temp1, j_temp1, \
-        i_temp2, j_temp2, choose_turn_result, index, chessindex, load, repent, i_temp3, j_temp3 
+        i_temp2, j_temp2, choose_turn_result, index, chessindex, load, repent, i_temp3, j_temp3,computerColor 
     pygame.init()
     screen = pygame.display.set_mode((800, 624))
     background_jpg = pygame.image.load('wuziqi/Background.jpg')
