@@ -4,7 +4,9 @@ from pygame.locals import *
 import sys
 import win32ui
 import copy
+import numpy as np
 import os
+import random as rd
 
 # define absolute path
 # def resource_path(relative): 
@@ -345,8 +347,7 @@ def tip(screen, chesslist, color, choose, wincolor, i1, j1, i2, j2, chessindex, 
 def alphabeta(board,depth,alpha,beta,color,computercolor): # 人工智能走子
 
     if depth == 0:
-        return get_score(board,int(computercolor))
-
+        return evalBoard(board,computercolor)
     if color == computercolor: # 当前是电脑方
         maxEval=ninf
         for action in actions(board):
@@ -360,15 +361,17 @@ def alphabeta(board,depth,alpha,beta,color,computercolor): # 人工智能走子
                 else:
                     return 10000
             evaluate = alphabeta(tmpboard,depth-1,alpha,beta,not color,computercolor) # 将position的child赋给eval。传参时，处理的子树会获知[已处理子树的根节点的取值信息]。
-            if evaluate == None:
-                continue
+            # if evaluate == None:
+            #     continue
+            tmp = maxEval
             maxEval = max(evaluate,maxEval) 
-            if maxEval == evaluate and depth == 3: # 如果当前节点的值比最大值大，则更新最优选择
+            if maxEval > tmp and depth == 3: # 如果当前节点的值比最大值大，则更新最优选择
                 bestAct = action
             alpha = max(alpha,evaluate) # 一棵子树清理完毕，就更新一次alpha。
             if beta <= alpha: # 如果在某个节点处，对方的最小值小于我方最大，那么对面肯定不会选这一支（因为传的alphabeta值>=alpha）,剪掉这一action.
                 break
         if depth == 3: # 如果是最大深度，则返回最优选择
+            print ('Maximum score is %d' % maxEval)
             return bestAct
         else: # 否则继续搜索
             return maxEval
@@ -395,96 +398,124 @@ def actions(board):
     actions = set()
     for i in range(4,19):
         for j in range(4,19):
-            if board[i][j] ==0 or board[i][j] == 1:
+            if board[i][j] == 0 or board[i][j] == 1:
                 for k in range(max(4,i-1),min(i+2,19)):
                     for l in range(max(4,j-1),min(j+2,19)):
                         if board[k][l] == 'Y':
                             actions.add((k,l))
     return actions
+
+# 改为8个七元组，这样不用考虑方向
+# 加入任意子z
+# Tuplematch 与 match 函数 
+class evalBoard():
+    """评估棋盘的分数
+
+    """
+    def __init__(self,chesslist:list,color:int):
+        self.chesslist = chesslist
+        self.x = color
+        self.y = not color
+        self.score = 0
+        self.bcf = 0
+        self.wcf = 0
+        self.bif = 0
+        self.wif = 0
+        self.blf = 0
+        self.wlf = 0
+        self.wdf = 0
+        self.blt = 0
+        self.wlt = 0
+        self.bst = 0
+        self.wst = 0
     
-def get_score(chesslist,color):
-    """
-    黑棋连5,评分为10000
-    白棋连5,评分为 -10000
-    黑棋两个冲四可以当成一个活四
-    白棋有活四，评分为 -9050
-    白棋有冲四，评分为 -9040
-    黑棋有活四，评分为 9030
-    黑棋有冲四和活三，评分为 9020
-    黑棋没有冲四，且白棋有活三，评分为 -9010
-    黑棋有2个活三, 且白棋没有活三,评分为 9000
-    下面针对黑棋或白棋的活三，眠三，活二，眠二的个数依次增加分数，评分为（黑棋得分 - 白棋得分）
-    """
-    total_score = 0
-    x = color
-    y = not color
-    bcf, wcf, bif, wif,blf,wlf,blt,wlt,bst,wst = 0,0,0,0,0,0,0,0,0,0
-    # black_cons_five = [[x,x,x,x,x,y],[x,x,x,x,x,'Y'],[x,x,x,x,x,'N'],[y,x,x,x,x,x],['Y',x,x,x,x,x],['N',x,x,x,x,x]] # 黑棋连5
-    # white_cons_five = [[y,y,y,y,y,x],[y,y,y,y,y,'Y'],[y,y,y,y,y,'N'],[x,y,y,y,y,y],['Y',y,y,y,y,y],['N',y,y,y,y,y]] # 白棋连5
-    black_impact_four = [[x,x,x,x,'Y',y],[x,x,x,x,'Y','Y'],[x,x,x,x,'Y','N'],[y,'Y',x,x,x,x],['Y','Y',x,x,x,x],['N','Y',x,x,x,x],
-                         [x,x,x,'Y',x,y],[x,x,x,'Y',x,'Y'],[x,x,x,'Y',x,'N'],[y,x,x,x,'Y',x],['Y',x,x,x,'Y',x],['N',x,x,x,'Y',x],
-                         [x,x,'Y',x,x,y],[x,x,'Y',x,x,'Y'],[x,x,'Y',x,x,'N'],[y,x,x,'Y',x,x],['Y',x,x,'Y',x,x],['N',x,x,'Y',x,x],
-                         [x,'Y',x,x,x,y],[x,'Y',x,x,x,'Y'],[x,'Y',x,x,x,'N'],[y,x,'Y',x,x,x],['Y',x,'Y',x,x,x],['N',x,'Y',x,x,x],
-                         ['Y',x,x,x,x,y],['Y',x,x,x,x,'Y'],[x,x,x,x,'Y','N'],[y,'Y',x,x,x,x],['Y','Y',x,x,x,x],['N','Y',x,x,x,x]]# 黑棋冲四
-    white_impact_four = [[y,y,y,y,'Y',x],[y,y,y,y,'Y','Y'],[y,y,y,y,'Y','N'],[x,'Y',y,y,y,y],['Y','Y',y,y,y,y],['N','Y',y,y,y,y],
-                         [y,y,y,'Y',y,x],[y,y,y,'Y',y,'Y'],[y,y,y,'Y',y,'N'],[x,y,y,y,'Y',y],['Y',y,y,y,'Y',y],['N',y,y,y,'Y',y],
-                         [y,y,'Y',y,y,x],[y,y,'Y',y,y,'Y'],[y,y,'Y',y,y,'N'],[x,y,y,'Y',y,y],['Y',y,y,'Y',y,y],['N',y,y,'Y',y,y],
-                         [y,'Y',y,y,y,x],[y,'Y',y,y,y,'Y'],[y,'Y',y,y,y,'N'],[x,y,'Y',y,y,y],['Y',y,'Y',y,y,y],['N',y,'Y',y,y,y],
-                         ['Y',y,y,y,y,x],['Y',y,y,y,y,'Y'],[y,y,y,y,'Y','N'],[x,'Y',y,y,y,y],['Y','Y',y,y,y,y],['N','Y',y,y,y,y]]# 白棋冲四
-    black_live_four = ['Y',x,x,x,x,'Y'] # 黑棋活四
-    white_live_four = ['Y',y,y,y,y,'Y'] # 白棋活四
-    black_live_three = [['Y',x,x,x,'Y',y],['Y',x,x,x,'Y','Y'],['Y',x,x,x,'Y','N'],[y,'Y',x,x,x,'Y'],['Y','Y',x,x,x,'Y'],['N','Y',x,x,x,'Y']] # 黑棋活三
-    white_live_three = [['Y',y,y,y,'Y',x],['Y',y,y,y,'Y','Y'],['Y',y,y,y,'Y','N'],[x,'Y',y,y,y,'Y'],['Y','Y',y,y,y,'Y'],['N','Y',y,y,y,'Y']] # 白棋活三
-    black_sleep_three = [[y,x,x,x,'Y','Y'],['N',x,x,x,'Y','Y'],['Y','Y',x,x,x,y],['Y','Y',x,x,x,'N']] # 黑棋眠三
-    white_sleep_three = [[x,y,y,y,'Y','Y'],['N',y,y,y,'Y','Y'],['Y','Y',y,y,y,x],['Y','Y',y,y,y,'N']] # 白棋眠三
-    # 分别计算横、竖、左下、右下四个方向的五元组
-    for i in range(4,19):
-        for j in range(4,19):
-            eval_list = []
-            if i  < 15:
-                eval_list.append([chesslist[i+k][j] for k in range(6)]) 
-            if j  < 15:
-                eval_list.append ([chesslist[i][j+k] for k in range(6)]) 
-            if i  < 15 and j  < 15:
-                eval_list.append ([chesslist[i+k][j+k] for k in range(6)])
-            if i  < 15 and j  > 7:
-                eval_list.append ([chesslist[i+k][j-k] for k in range(6)])
-            for elem in eval_list:
-                if elem in black_impact_four:
-                    bif += 1
-                elif elem in white_impact_four:
-                    wif += 1
-                elif elem in black_live_four:
-                    blf += 1
-                elif elem in white_live_four:
-                    wlf += 1
-                elif elem in black_live_three:
-                    blt += 1
-                elif elem in white_live_three:
-                    wlt += 1
-                elif elem in black_sleep_three:
-                    bst += 1
-                elif elem in white_sleep_three:
-                    wst += 1
+    def match (type_name):
+        print (type_name)
+ 
+    def match_tuple(Tup:tuple,self):
+        tuple_dict = {
+            [1,1,1,1,1,3]:"black_cons_five",       # 黑棋连5
 
-    if bcf > 0: # 黑棋连5，赢
-        total_score = 10000
-    elif wcf > 0 or wlf > 0: # 白棋连5，输
-        total_score = -10000
-    elif wlf > 0:
-                total_score = -9050
-    elif wif > 0: # 白棋冲四，输
-        total_score = -9040
-    elif bif > 1 or blf > 0:
-        total_score = 9030
-    elif blf > 0 and blt > 0:
-        total_score = 9020
-    elif wlt > 0:
-        total_score = -9010
-    elif blt > 0 and wlt == 0:
-        total_score = 9000
+            [0,0,0,0,0,3]:"white_cons_five",       # 白棋连5
 
-    return total_score
+            [1,1,1,1,'Y',3]:"black_impact_four",   # z = ['Y','N',y]
+            [1,1,1,'Y',1,3]:"black_impact_four",
+            [1,1,'Y',1,1,3]:"black_impact_four",
+            [1,'Y',1,1,1,3]:"black_impact_four",
+            ['Y',1,1,1,1,3]:"black_impact_four",    # 黑棋冲四
+
+            [0,0,0,0,'Y',3]:"white_impact_four",    # z = ['Y','N',x]
+            [0,0,0,'Y',0,3]:"white_impact_four",
+            [0,0,'Y',0,0,3]:"white_impact_four",
+            [0,'Y',0,0,0,3]:"white_impact_four",
+            ['Y',0,0,0,0,3]:"white_impact_four",     # 白棋冲四
+
+            ['Y',1,1,1,1,'Y']:"black_live_four", # 黑棋活四
+
+            ['Y',0,0,0,0,'Y']:"white_live_four", # 白棋活四
+
+            [1,0,0,0,0,1]:"white_dead_four", # 白棋死四
+            ['N',0,0,0,0,1]:"white_dead_four",
+
+            ['Y',1,1,1,'Y',3]:"black_live_three", # 黑棋活三
+
+            ['Y',0,0,0,'Y',3]:"white_live_three" , # 白棋活三
+
+            [3,1,1,1,'Y','Y']:"black_sleep_three", # 黑棋眠三
+
+            [3,0,0,0,'Y','Y']:"white_sleep_three" # 白棋眠三
+        }
+
+    def get_score(self):
+        """
+        黑棋连5,评分为10000
+        白棋连5,评分为 -10000
+        黑棋两个冲四可以当成一个活四
+        白棋有活四，评分为 -9050
+        白棋有冲四，评分为 -9040
+        黑棋有活四，评分为 9030
+        黑棋有冲四和活三，评分为 9020
+        黑棋没有冲四，且白棋有活三，评分为 -9010
+        黑棋有2个活三, 且白棋没有活三,评分为 9000
+        下面针对黑棋或白棋的活三，眠三，活二，眠二的个数依次增加分数，评分为（黑棋得分 - 白棋得分）
+        """
+        # 分别计算横、竖、左下、右下四个方向的五元组
+        for i in range(4,19):
+            for j in range(4,19):
+                eval_list = [] 
+                directions = [[1,0],[1,1],[0,1],[-1,1],[-1,0],[-1,-1],[0,-1],[1,-1]]
+                for direction in directions:
+                    try:
+                        val = []
+                        for k in range(6):
+                            pos = np.array([i,j])+np.array(direction)*k
+                            val.append(self.chesslist[pos[0]][pos[1]]) 
+                        eval_list.append(val) 
+                    except: # 越界
+                        continue
+                for elem in eval_list:
+                    self.match_tuple(elem)
+
+        if self.bcf > 0: # 黑棋连5，赢
+            self.score = 10000
+        elif self.wcf > 0 or self.wlf > 0: # 白棋连5，输
+            self.score = -10000
+        elif self.wlf > 0: # 白棋活4，输
+            self.score = -9050
+        elif self.wif > 0: # 白棋冲四，输
+            self.score = -9040
+        elif self.bif > 1 or self.blf > 0:
+            self.score = 9030
+        elif self.blf > 0 and self.blt > 0:
+            self.score = 9020
+        elif self.wdf > 0: # 白棋死四，惩罚
+            self.score = -10
+        elif self.wlt > 0:
+            self.score = -9010
+        elif self.blt > 0 and self.wlt == 0:
+            self.score = 9000
+
+        return self.score
 
 def win(lst,x,y):
     """判断是否胜利，只要判断(i,j)附近是否有五子连珠即可
@@ -523,10 +554,9 @@ def key_control(screen, mode):
         color = 0
     else:
         color = 1
-    computerColor = not color
     tip(screen, lst, color, mode,wincolor, i_temp1, j_temp1, i_temp2, j_temp2, chessindex, index)
     if choose_turn_result: # 如果电脑先手（初始值由choose_turn得出）
-        lst[11][11] = color
+        lst[11][11] = int(color)
         draw_chessman(8, 8, screen, int(color)) # 画最中间
         order = not order
         choose_turn_result = not choose_turn_result # order与choose_turn_result取反
@@ -546,7 +576,7 @@ def key_control(screen, mode):
                         # 如果点击的位置无棋子，游戏运行中，且当前落子方为人类玩家
                         if ((i-4) * 40 + 15) < x < ((i-4) * 40 + 55) and ((j-4) * 40 + 15) < y < ((j-4) * 40 + 55) and lst[i][j] == 'Y' and running and not choose_turn_result: 
                             repent = True # 悔棋为真
-                            draw_chessman(i, j, screen, int(color))
+                            draw_chessman(i, j, screen, color)
                             play_chess_sound.play(0)
                             # (i_temp1,j_temp1)为本次落子的位置
                             i_temp1 = i
@@ -561,14 +591,14 @@ def key_control(screen, mode):
                             # 将电脑方操作放在了这里，是为了防止误触。即当人类方落子无效时，电脑方便不会行动。
                             if not mode and running:
                                 print ("Calculating next move...")
-                                a = alphabeta(lst,3,ninf,pinf,int(computerColor),int(computerColor))
+                                a = alphabeta(lst,3,ninf,pinf,not color,not color)
                                 repent = True
-                                draw_chessman(a[0], a[1], screen, int(computerColor))
+                                draw_chessman(a[0], a[1], screen, not color)
                                 play_chess_sound.play(0)
-                                lst[a[0]][a[1]] = int(computerColor)
+                                lst[a[0]][a[1]] = not color
                                 i_temp2 = a[0]
                                 j_temp2 = a[1]
-                                wincolor = int(computerColor)
+                                wincolor = not color
                                 chessindex[a[0]][a[1]] = index
                                 index += 1
                                 if win(lst,a[0],a[1]):
