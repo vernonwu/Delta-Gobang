@@ -347,10 +347,12 @@ def tip(screen, chesslist, color, choose, wincolor, i1, j1, i2, j2, chessindex, 
 def alphabeta(board,depth,alpha,beta,color,computercolor): # 人工智能走子
 
     if depth == 0:
-        return evalBoard(board,computercolor)
+        A = evalBoard(board,computercolor)
+        return A.get_score()
     if color == computercolor: # 当前是电脑方
         maxEval=ninf
         for action in actions(board):
+
             tmpboard = copy.deepcopy(board)
             tmpboard[action[0]][action[1]] = color
 
@@ -360,9 +362,8 @@ def alphabeta(board,depth,alpha,beta,color,computercolor): # 人工智能走子
                     return action
                 else:
                     return 10000
+
             evaluate = alphabeta(tmpboard,depth-1,alpha,beta,not color,computercolor) # 将position的child赋给eval。传参时，处理的子树会获知[已处理子树的根节点的取值信息]。
-            # if evaluate == None:
-            #     continue
             tmp = maxEval
             maxEval = max(evaluate,maxEval) 
             if maxEval > tmp and depth == 3: # 如果当前节点的值比最大值大，则更新最优选择
@@ -378,6 +379,7 @@ def alphabeta(board,depth,alpha,beta,color,computercolor): # 人工智能走子
     else:
         minEval=pinf
         for action in actions(board):
+
             tmpboard = copy.deepcopy(board)
             tmpboard[action[0]][action[1]] = color
 
@@ -414,8 +416,8 @@ class evalBoard():
     """
     def __init__(self,chesslist:list,color:int):
         self.chesslist = chesslist
-        self.x = color
-        self.y = not color
+        self.x = str(color)
+        self.y = str(not color)
         self.score = 0
         self.bcf = 0
         self.wcf = 0
@@ -428,43 +430,50 @@ class evalBoard():
         self.wlt = 0
         self.bst = 0
         self.wst = 0
+        self.tuple_dict = {
+            "111113": self.bcf,       # 黑棋连5
+
+            "000003": self.wcf,       # 白棋连5
+
+            "01111Y": self.bif,       # 黑棋连4
+            "111Y10": self.bif,
+            "11Y110": self.bif,
+            "1Y1110": self.bif,
+            "Y11110": self.bif,    # 黑棋冲四
+
+            "10000Y": self.wif,    # z = ['Y','N',x]
+            "000Y01": self.wif,
+            "00Y001": self.wif,
+            "0Y0001": self.wif,
+            "Y00001": self.wif,     # 白棋冲四
+
+            "Y1111Y": self.blf, # 黑棋活四
+
+            "Y0000Y": self.wlf, # 白棋活四
+
+            "100001": self.wdf, # 白棋死四
+            "N00001": self.wdf,
+
+            "Y111Y3": self.blt, # 黑棋活三
+
+            "Y000Y3": self.wlt , # 白棋活三
+
+            "Y11103": self.bst, # 黑棋眠三
+
+            "Y00013": self.wst # 白棋眠三
+        }
             
  
-    def match_tuple(self,Tup):
-        tuple_dict = {
-            [1,1,1,1,1,3]: self.bcf,       # 黑棋连5
-
-            [0,0,0,0,0,3]: self.wcf,       # 白棋连5
-
-            [1,1,1,1,'Y',3]:"black_impact_four",   # z = ['Y','N',y]
-            [1,1,1,'Y',1,3]:"black_impact_four",
-            [1,1,'Y',1,1,3]:"black_impact_four",
-            [1,'Y',1,1,1,3]:"black_impact_four",
-            ['Y',1,1,1,1,3]:"black_impact_four",    # 黑棋冲四
-
-            [0,0,0,0,'Y',3]:"white_impact_four",    # z = ['Y','N',x]
-            [0,0,0,'Y',0,3]:"white_impact_four",
-            [0,0,'Y',0,0,3]:"white_impact_four",
-            [0,'Y',0,0,0,3]:"white_impact_four",
-            ['Y',0,0,0,0,3]:"white_impact_four",     # 白棋冲四
-
-            ['Y',1,1,1,1,'Y']:"black_live_four", # 黑棋活四
-
-            ['Y',0,0,0,0,'Y']:"white_live_four", # 白棋活四
-
-            [1,0,0,0,0,1]:"white_dead_four", # 白棋死四
-            ['N',0,0,0,0,1]:"white_dead_four",
-
-            ['Y',1,1,1,'Y',3]:"black_live_three", # 黑棋活三
-
-            ['Y',0,0,0,'Y',3]:"white_live_three" , # 白棋活三
-
-            [3,1,1,1,'Y','Y']:"black_sleep_three", # 黑棋眠三
-
-            [3,0,0,0,'Y','Y']:"white_sleep_three" # 白棋眠三
-        }
-        if Tup in tuple_dict:
-            tuple_dict[Tup] += 1
+    def match_tuple(self,Tup:str):
+        
+        Tup.replace(0,self.y)
+        Tup.replace(1,self.x)
+        if Tup in self.tuple_dict:
+            self.tuple_dict[Tup] += 1
+        else:
+            Tup[5] = 3
+            if Tup in self.tuple_dict:
+                self.tuple_dict[Tup] += 1
 
     def get_score(self):
         """
@@ -485,10 +494,10 @@ class evalBoard():
                 directions = [[1,0],[1,1],[0,1],[-1,1],[-1,0],[-1,-1],[0,-1],[1,-1]]
                 for direction in directions:
                     try:
-                        elem = []
+                        elem = ""
                         for k in range(6):
                             pos = np.array([i,j])+np.array(direction)*k
-                            elem.append(self.chesslist[pos[0]][pos[1]]) 
+                            elem += str(self.chesslist[pos[0]][pos[1]]) 
                         self.match_tuple(elem)
                     except: # 越界
                         continue
@@ -506,10 +515,12 @@ class evalBoard():
         elif self.blf > 0 and self.blt > 0:
             self.score = 9020
         elif self.wdf > 0: # 白棋死四，惩罚
+            print ("that was close")
             self.score = -10
         elif self.wlt > 0:
             self.score = -9010
         elif self.blt > 0 and self.wlt == 0:
+            print ("fantastic")
             self.score = 9000
 
         return self.score
