@@ -428,15 +428,13 @@ class evalBoard():
         self.wlt = 0
         self.bst = 0
         self.wst = 0
-    
-    def match (type_name):
-        print (type_name)
+            
  
-    def match_tuple(Tup:tuple,self):
+    def match_tuple(self,Tup):
         tuple_dict = {
-            [1,1,1,1,1,3]:"black_cons_five",       # 黑棋连5
+            [1,1,1,1,1,3]: self.bcf,       # 黑棋连5
 
-            [0,0,0,0,0,3]:"white_cons_five",       # 白棋连5
+            [0,0,0,0,0,3]: self.wcf,       # 白棋连5
 
             [1,1,1,1,'Y',3]:"black_impact_four",   # z = ['Y','N',y]
             [1,1,1,'Y',1,3]:"black_impact_four",
@@ -465,6 +463,8 @@ class evalBoard():
 
             [3,0,0,0,'Y','Y']:"white_sleep_three" # 白棋眠三
         }
+        if Tup in tuple_dict:
+            tuple_dict[Tup] += 1
 
     def get_score(self):
         """
@@ -482,19 +482,16 @@ class evalBoard():
         # 分别计算横、竖、左下、右下四个方向的五元组
         for i in range(4,19):
             for j in range(4,19):
-                eval_list = [] 
                 directions = [[1,0],[1,1],[0,1],[-1,1],[-1,0],[-1,-1],[0,-1],[1,-1]]
                 for direction in directions:
                     try:
-                        val = []
+                        elem = []
                         for k in range(6):
                             pos = np.array([i,j])+np.array(direction)*k
-                            val.append(self.chesslist[pos[0]][pos[1]]) 
-                        eval_list.append(val) 
+                            elem.append(self.chesslist[pos[0]][pos[1]]) 
+                        self.match_tuple(elem)
                     except: # 越界
                         continue
-                for elem in eval_list:
-                    self.match_tuple(elem)
 
         if self.bcf > 0: # 黑棋连5，赢
             self.score = 10000
