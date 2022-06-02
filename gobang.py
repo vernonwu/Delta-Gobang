@@ -364,7 +364,7 @@ def alphabeta(board,depth,alpha,beta,color:int,computercolor:int): # 人工智�
                 else:
                     return 10000
 
-            evaluate = alphabeta(tmpboard,depth-1,alpha,beta,not color,computercolor) # 将position的child赋给eval。传参时，处理的子树会获知[已处理子树的根节点的取值信息]。
+            evaluate = alphabeta(tmpboard,depth-1,alpha,beta,int(not color),computercolor) # 将position的child赋给eval。传参时，处理的子树会获知[已处理子树的根节点的取值信息]。
             tmp = maxEval
             maxEval = max(evaluate,maxEval) 
             if maxEval > tmp and depth == 3: # 如果当前节点的值比最大值大，则更新最优选择
@@ -387,7 +387,7 @@ def alphabeta(board,depth,alpha,beta,color:int,computercolor:int): # 人工智�
             if win(tmpboard,action[0],action[1]):
                 return -10000
 
-            evaluate = alphabeta(tmpboard,depth-1,alpha,beta,not color,computercolor)
+            evaluate = alphabeta(tmpboard,depth-1,alpha,beta,int(not color),computercolor)
             minEval = min(evaluate,minEval)
             beta = min(beta,evaluate)
             if beta <= alpha:
@@ -408,16 +408,13 @@ def actions(board):
                             actions.add((k,l))
     return actions
 
-# 改为8个七元组，这样不用考虑方向
-# 加入任意子z
-# Tuplematch 与 match 函数 
 class evalBoard():
     """评估棋盘的分数
 
     """
     def __init__(self,chesslist:list,color:int):
         self.chesslist = chesslist
-        self.x = str(color)
+        self.x = str(color) # 电脑执黑为1
         self.y = str(int(not color))
         self.score = 0
         self.potential = 0
@@ -432,21 +429,18 @@ class evalBoard():
         self.wlt = [0]
         self.bst = [0]
         self.wst = [0]
+
         self.tuple_dict = {
             "111113": self.bcf,       # 黑棋连5
 
             "000003": self.wcf,       # 白棋连5
-
-            "01111Y": self.bif,       # 黑棋连4
+                                      # 黑棋连4
             "111Y10": self.bif,
             "11Y110": self.bif,
-            "1Y1110": self.bif,
             "Y11110": self.bif,    # 黑棋冲四
-
-            "10000Y": self.wif,    # z = ['Y','N',x]
+ 
             "000Y01": self.wif,
             "00Y001": self.wif,
-            "0Y0001": self.wif,
             "Y00001": self.wif,     # 白棋冲四
 
             "Y1111Y": self.blf, # 黑棋活四
@@ -469,8 +463,6 @@ class evalBoard():
     def match_tuple(self,Tup:str):
         Tup = Tup.replace(self.y,"0")
         Tup = Tup.replace(self.x,"1")
-        Tup = Tup.replace("False","0")
-        Tup = Tup.replace("True","1")
         if Tup in self.tuple_dict:
             self.tuple_dict[Tup][0] += 1
         else:
@@ -513,15 +505,15 @@ class evalBoard():
             self.score = -9050
         elif self.wif[0] > 0: # 白棋冲四，输
             self.score = -9040
-        elif self.bif[0] > 1 or self.blf[0] > 0:
+        elif self.bif[0] > 1 or self.blf[0] > 0: # 黑棋冲四多于1个或黑棋活四
             self.score = 9030
-        elif self.blf[0] > 0 and self.blt[0] > 0:
+        elif self.blf[0] > 0 and self.blt[0] > 0: # 黑棋活四和活三，赢
             self.score = 9020
         elif self.wdf[0] > 0: # 白棋死四，惩罚
             self.score = -10
-        elif self.wlt[0] > 0:
+        elif self.wlt[0] > 0: # 白棋活三，输
             self.score = -9010
-        elif self.blt[0] > 0 and self.wlt[0] == 0:
+        elif self.blt[0] > 1: # 黑棋双活三，白棋无活三，赢
             self.score = 9000
         return self.score
 
@@ -565,7 +557,7 @@ def key_control(screen, mode):
     tip(screen, lst, color, mode,wincolor, i_temp1, j_temp1, i_temp2, j_temp2, chessindex, index)
     if choose_turn_result: # 如果电脑先手（初始值由choose_turn得出）
         lst[11][11] = int(color)
-        draw_chessman(8, 8, screen, int(color)) # 画最中间
+        draw_chessman(8, 8, screen, color) # 画最中间
         order = not order
         choose_turn_result = not choose_turn_result # order与choose_turn_result取反
         chessindex[11][11] = index # 将最中间的棋子索引记录为0
@@ -589,8 +581,8 @@ def key_control(screen, mode):
                             # (i_temp1,j_temp1)为本次落子的位置
                             i_temp1 = i
                             j_temp1 = j
-                            lst[i][j] = color # 更新棋盘
-                            wincolor = color # 更新可能的胜利方
+                            lst[i][j] = int (color) # 更新棋盘
+                            wincolor = int(color) # 更新可能的胜利方
                             chessindex[i][j] = index
                             index += 1
                             if win(lst,i,j):
@@ -599,14 +591,14 @@ def key_control(screen, mode):
                             # 将电脑方操作放在了这里，是为了防止误触。即当人类方落子无效时，电脑方便不会行动。
                             if not mode and running:
                                 print ("Calculating next move...")
-                                a = alphabeta(lst,3,ninf,pinf,not color,not color)
+                                a = alphabeta(lst,3,ninf,pinf,int(not color),int(not color))
                                 repent = True
-                                draw_chessman(a[0], a[1], screen, not color)
+                                draw_chessman(a[0], a[1], screen,not color)
                                 play_chess_sound.play(0)
-                                lst[a[0]][a[1]] = not color
+                                lst[a[0]][a[1]] = int(not color)
                                 i_temp2 = a[0]
                                 j_temp2 = a[1]
-                                wincolor = not color
+                                wincolor = int(not color)
                                 chessindex[a[0]][a[1]] = index
                                 index += 1
                                 if win(lst,a[0],a[1]):
@@ -638,7 +630,7 @@ def key_control(screen, mode):
 def main():
     # 定义全局变量
     global background, checkerboard, button, order, lst, score, running, background_jpg, wincolor, i_temp1, j_temp1, \
-        i_temp2, j_temp2, choose_turn_result, index, chessindex, load, repent, i_temp3, j_temp3,computerColor 
+        i_temp2, j_temp2, choose_turn_result, index, chessindex, load, repent, i_temp3, j_temp3
     pygame.init()
     screen = pygame.display.set_mode((800, 624))
     background_jpg = pygame.image.load('wuziqi/Background.jpg')
