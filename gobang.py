@@ -461,8 +461,6 @@ class evalBoard():
             
  
     def match_tuple(self,Tup:str):
-        Tup = Tup.replace(self.y,"0")
-        Tup = Tup.replace(self.x,"1")
         if Tup in self.tuple_dict:
             self.tuple_dict[Tup][0] += 1
         else:
