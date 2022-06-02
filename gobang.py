@@ -344,11 +344,12 @@ def tip(screen, chesslist, color, choose, wincolor, i1, j1, i2, j2, chessindex, 
         pygame.draw.rect(screen, button, [(i1 - 4) * 40 + 15, (j1 - 4) * 40 + 15, 30, 30], 3)
         pygame.draw.rect(screen, button, [(i2 - 4) * 40 + 15, (j2 - 4) * 40 + 15, 30, 30], 3)
 
-def alphabeta(board,depth,alpha,beta,color,computercolor): # 人工智能走子
+def alphabeta(board,depth,alpha,beta,color:int,computercolor:int): # 人工智能走子
 
     if depth == 0:
         A = evalBoard(board,computercolor)
         return A.get_score()
+
     if color == computercolor: # 当前是电脑方
         maxEval=ninf
         for action in actions(board):
@@ -417,19 +418,20 @@ class evalBoard():
     def __init__(self,chesslist:list,color:int):
         self.chesslist = chesslist
         self.x = str(color)
-        self.y = str(not color)
+        self.y = str(int(not color))
         self.score = 0
-        self.bcf = 0
-        self.wcf = 0
-        self.bif = 0
-        self.wif = 0
-        self.blf = 0
-        self.wlf = 0
-        self.wdf = 0
-        self.blt = 0
-        self.wlt = 0
-        self.bst = 0
-        self.wst = 0
+        self.potential = 0
+        self.bcf = [0] # list是可变的，此处利用作为传值
+        self.wcf = [0]
+        self.bif = [0]
+        self.wif = [0]
+        self.blf = [0]
+        self.wlf = [0]
+        self.wdf = [0]
+        self.blt = [0]
+        self.wlt = [0]
+        self.bst = [0]
+        self.wst = [0]
         self.tuple_dict = {
             "111113": self.bcf,       # 黑棋连5
 
@@ -465,15 +467,16 @@ class evalBoard():
             
  
     def match_tuple(self,Tup:str):
-        
-        Tup.replace(0,self.y)
-        Tup.replace(1,self.x)
+        Tup = Tup.replace(self.y,"0")
+        Tup = Tup.replace(self.x,"1")
+        Tup = Tup.replace("False","0")
+        Tup = Tup.replace("True","1")
         if Tup in self.tuple_dict:
-            self.tuple_dict[Tup] += 1
+            self.tuple_dict[Tup][0] += 1
         else:
             Tup[5] = 3
             if Tup in self.tuple_dict:
-                self.tuple_dict[Tup] += 1
+                self.tuple_dict[Tup][0] += 1
 
     def get_score(self):
         """
@@ -489,9 +492,9 @@ class evalBoard():
         下面针对黑棋或白棋的活三，眠三，活二，眠二的个数依次增加分数，评分为（黑棋得分 - 白棋得分）
         """
         # 分别计算横、竖、左下、右下四个方向的五元组
+        directions = [[1,0],[1,1],[0,1],[-1,1],[-1,0],[-1,-1],[0,-1],[1,-1]]
         for i in range(4,19):
             for j in range(4,19):
-                directions = [[1,0],[1,1],[0,1],[-1,1],[-1,0],[-1,-1],[0,-1],[1,-1]]
                 for direction in directions:
                     try:
                         elem = ""
@@ -502,27 +505,24 @@ class evalBoard():
                     except: # 越界
                         continue
 
-        if self.bcf > 0: # 黑棋连5，赢
+        if self.bcf[0] > 0: # 黑棋连5，赢
             self.score = 10000
-        elif self.wcf > 0 or self.wlf > 0: # 白棋连5，输
+        elif self.wcf[0] > 0 or self.wlf[0] > 0: # 白棋连5，输
             self.score = -10000
-        elif self.wlf > 0: # 白棋活4，输
+        elif self.wlf[0] > 0: # 白棋活4，输
             self.score = -9050
-        elif self.wif > 0: # 白棋冲四，输
+        elif self.wif[0] > 0: # 白棋冲四，输
             self.score = -9040
-        elif self.bif > 1 or self.blf > 0:
+        elif self.bif[0] > 1 or self.blf[0] > 0:
             self.score = 9030
-        elif self.blf > 0 and self.blt > 0:
+        elif self.blf[0] > 0 and self.blt[0] > 0:
             self.score = 9020
-        elif self.wdf > 0: # 白棋死四，惩罚
-            print ("that was close")
+        elif self.wdf[0] > 0: # 白棋死四，惩罚
             self.score = -10
-        elif self.wlt > 0:
+        elif self.wlt[0] > 0:
             self.score = -9010
-        elif self.blt > 0 and self.wlt == 0:
-            print ("fantastic")
+        elif self.blt[0] > 0 and self.wlt[0] == 0:
             self.score = 9000
-
         return self.score
 
 def win(lst,x,y):
