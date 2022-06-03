@@ -320,7 +320,7 @@ def pop_window(screen, color):
         screen.blit(text1, (120, 270))
 
 
-def tip(screen, chesslist, color, choose, wincolor, i1, j1, i2, j2, chessindex, index):
+def tip(screen, chesslist, color, choose, i1, j1, i2, j2):
     """显示一些提示
 
     当前是什么模式,轮到谁落子,谁赢了
@@ -344,6 +344,36 @@ def tip(screen, chesslist, color, choose, wincolor, i1, j1, i2, j2, chessindex, 
         pygame.draw.rect(screen, button, [(i1 - 4) * 40 + 15, (j1 - 4) * 40 + 15, 30, 30], 3)
         pygame.draw.rect(screen, button, [(i2 - 4) * 40 + 15, (j2 - 4) * 40 + 15, 30, 30], 3)
 
+def judgepoint(chesslist, i, j):
+    """判断点击的位置是否有棋子
+
+    """
+     
+def trim_actions(chesslist,actions):
+    """初步评估,挑选出20个最优的选点
+    """
+
+    AI_LIMITED_MOVE_NUM = 20
+    score_dict = {}
+    for act in actions:
+        cslst = copy.deepcopy(chesslist[max(4,act[0]-5):min(19,act[0]+6)][max(4,act[1]-5):min(19,act[1]+6)]) # 拷贝act周围距离5以内的棋盘
+        i, j = act[0], act[1]
+        pointscore = 0
+        for chess in range(2): # 黑棋白棋都试一遍
+
+            cslst[i][j] = chess
+            evalscore = judgepoint(cslst,i,j)
+            pointscore = max(evalscore,pointscore)
+
+        score_dict[act] = pointscore
+
+    trimmed_actions = sorted(score_dict.items(), key=lambda x: x[1], reverse=True)
+    if len(trimmed_actions) > AI_LIMITED_MOVE_NUM:
+        trimmed_actions = trimmed_actions[:AI_LIMITED_MOVE_NUM]
+    rt_list = [act[0] for act in trimmed_actions]
+    return rt_list
+
+
 def alphabeta(board,depth,alpha,beta,color:int,computercolor:int): # 人工智能走子
 
     if depth == 0:
@@ -351,8 +381,11 @@ def alphabeta(board,depth,alpha,beta,color:int,computercolor:int): # 人工智�
         return A.get_score()
 
     if color == computercolor: # 当前是电脑方
+
         maxEval=ninf
-        for action in actions(board):
+        trimmedactions = trim_actions(board,actions(board))
+
+        for action in trimmedactions:
 
             tmpboard = copy.deepcopy(board)
             tmpboard[action[0]][action[1]] = color
@@ -373,13 +406,17 @@ def alphabeta(board,depth,alpha,beta,color:int,computercolor:int): # 人工智�
             if beta <= alpha: # 如果在某个节点处，对方的最小值小于我方最大，那么对面肯定不会选这一支（因为传的alphabeta值>=alpha）,剪掉这一action.
                 break
         if depth == 3: # 如果是最大深度，则返回最优选择
-            print ('Maximum score is %d' % maxEval)
+            print ('Maximum score for the computer is %d' % maxEval)
             return bestAct
         else: # 否则继续搜索
             return maxEval
+
     else:
+
         minEval=pinf
-        for action in actions(board):
+        trimmedactions = trim_actions(board,actions(board))
+
+        for action in trimmedactions:
 
             tmpboard = copy.deepcopy(board)
             tmpboard[action[0]][action[1]] = color
@@ -461,12 +498,18 @@ class evalBoard():
             
  
     def match_tuple(self,Tup:str):
+
+        Tup = Tup.replace(self.x,"3")
+        Tup = Tup.replace(self.y,"0")
+        Tup = Tup.replace("3","1")
+
         if Tup in self.tuple_dict:
             self.tuple_dict[Tup][0] += 1
         else:
             Tup[5] = 3
             if Tup in self.tuple_dict:
                 self.tuple_dict[Tup][0] += 1
+
 
     def get_score(self):
         """
@@ -481,7 +524,7 @@ class evalBoard():
         黑棋有2个活三, 且白棋没有活三,评分为 9000
         下面针对黑棋或白棋的活三，眠三，活二，眠二的个数依次增加分数，评分为（黑棋得分 - 白棋得分）
         """
-        # 分别计算横、竖、左下、右下四个方向的五元组
+        # 分别计算横、竖、左下、右下四个方向的六元组
         directions = [[1,0],[1,1],[0,1],[-1,1],[-1,0],[-1,-1],[0,-1],[1,-1]]
         for i in range(4,19):
             for j in range(4,19):
@@ -497,7 +540,7 @@ class evalBoard():
 
         if self.bcf[0] > 0: # 黑棋连5，赢
             self.score = 10000
-        elif self.wcf[0] > 0 or self.wlf[0] > 0: # 白棋连5，输
+        elif self.wcf[0] > 0: # 白棋连5，输
             self.score = -10000
         elif self.wlf[0] > 0: # 白棋活4，输
             self.score = -9050
@@ -507,12 +550,12 @@ class evalBoard():
             self.score = 9030
         elif self.blf[0] > 0 and self.blt[0] > 0: # 黑棋活四和活三，赢
             self.score = 9020
-        elif self.wdf[0] > 0: # 白棋死四，惩罚
-            self.score = -10
         elif self.wlt[0] > 0: # 白棋活三，输
             self.score = -9010
         elif self.blt[0] > 1: # 黑棋双活三，白棋无活三，赢
             self.score = 9000
+        elif self.wdf[0] > 0: # 白棋死四，惩罚
+            self.score = -10
         return self.score
 
 def win(lst,x,y):
@@ -552,7 +595,7 @@ def key_control(screen, mode):
         color = 0
     else:
         color = 1
-    tip(screen, lst, color, mode,wincolor, i_temp1, j_temp1, i_temp2, j_temp2, chessindex, index)
+    tip(screen, lst, color, mode, i_temp1, j_temp1, i_temp2, j_temp2)
     if choose_turn_result: # 如果电脑先手（初始值由choose_turn得出）
         lst[11][11] = int(color)
         draw_chessman(8, 8, screen, color) # 画最中间
@@ -573,13 +616,13 @@ def key_control(screen, mode):
                     for j in range(4, 19):
                         # 如果点击的位置无棋子，游戏运行中，且当前落子方为人类玩家
                         if ((i-4) * 40 + 15) < x < ((i-4) * 40 + 55) and ((j-4) * 40 + 15) < y < ((j-4) * 40 + 55) and lst[i][j] == 'Y' and running and not choose_turn_result: 
+                            lst[i][j] = int (color) # 更新棋盘
                             repent = True # 悔棋为真
                             draw_chessman(i, j, screen, color)
                             play_chess_sound.play(0)
                             # (i_temp1,j_temp1)为本次落子的位置
                             i_temp1 = i
                             j_temp1 = j
-                            lst[i][j] = int (color) # 更新棋盘
                             wincolor = int(color) # 更新可能的胜利方
                             chessindex[i][j] = index
                             index += 1
