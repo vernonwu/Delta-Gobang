@@ -1,12 +1,14 @@
 from asyncio.windows_events import NULL
+from re import S
 import pygame
 from pygame.locals import *
 import sys
 import win32ui
 import copy
 import numpy as np
+import math as m
 import os
-import random as rd
+
 
 # define absolute path
 # def resource_path(relative): 
@@ -344,28 +346,59 @@ def tip(screen, chesslist, color, choose, i1, j1, i2, j2):
         pygame.draw.rect(screen, button, [(i1 - 4) * 40 + 15, (j1 - 4) * 40 + 15, 30, 30], 3)
         pygame.draw.rect(screen, button, [(i2 - 4) * 40 + 15, (j2 - 4) * 40 + 15, 30, 30], 3)
 
-def judgepoint(chesslist, i, j):
-    """判断点击的位置是否有棋子
+def judgepoint(evalst):
+    """判断单个位置的分数
 
     """
-     
-def trim_actions(chesslist,actions):
-    """初步评估,挑选出20个最优的选点
+    SCORE_FIVE, SCORE_FOUR, SCORE_SFOUR= 10000, 2000, 1000
+    SCORE_THREE_COUNT_C,SCORE_THREE_COUNT_H = 0,0
+    for elem in evalst:
+        if elem.count("11111")+elem.count("00000") > 0 : # 如果有活5
+            return SCORE_FIVE
+        elif elem[1:10].count("1111Y")+elem[1:10].count("Y1111")+elem[1:10].count("0000Y")+elem[1:10].count("Y0000") > 0 : # 如果有活四
+            return SCORE_FOUR
+        elif elem[1:10].count("Y11110")+elem[1:10].count("Y00001")+elem[1:10].count("0Y000")+elem[1:10].count("000Y0")+elem[1:10].count("1Y111")+elem[1:10].count("111Y1") > 0 : # 如果有眠四
+            return SCORE_SFOUR
+        elif elem[2:9].count("Y111Y") + elem[2:9].count("Y1Y11Y")+elem[2:9].count("Y11Y1Y") > 0 :  # 如果有活三
+            SCORE_THREE_COUNT_C += 1
+        elif elem[2:9].count("Y000Y") + elem[2:9].count("Y0Y00Y")+elem[2:9].count("Y00Y0Y") > 0 :
+            SCORE_THREE_COUNT_H += 1
+    if SCORE_THREE_COUNT_C > 1 or SCORE_THREE_COUNT_H > 1:
+        return 2500
+    elif SCORE_THREE_COUNT_C > 0  or SCORE_THREE_COUNT_H> 0:
+        return 100
+    else:
+        return 0
+
+def evalpoint(act,chesslist,chesscolor):
+    directions = [[1,0],[1,1],[0,1],[-1,1]]
+    i, j = act[0], act[1]
+    chesslist[i][j] = chesscolor
+    evalst = []
+    for direction in directions:
+        try:
+            elem = ""
+            for k in range(max(4-i,-4),min(5,19-j)):
+                pos = np.array([i, j]) + np.array(direction) * k
+                elem += str(chesslist[pos[0]][pos[1]])
+            evalst.append(elem)
+        except:  # 越界
+            continue
+    chesslist[i][j] = 'Y'
+    return judgepoint(evalst)
+
+def trim_actions(chesslist,actions,computer_color):
+    """初步评估,挑选出15个最优的选点
     """
 
     AI_LIMITED_MOVE_NUM = 20
     score_dict = {}
+
     for act in actions:
-        cslst = copy.deepcopy(chesslist[max(4,act[0]-5):min(19,act[0]+6)][max(4,act[1]-5):min(19,act[1]+6)]) # 拷贝act周围距离5以内的棋盘
-        i, j = act[0], act[1]
-        pointscore = 0
-        for chess in range(2): # 黑棋白棋都试一遍
+        computerscore = evalpoint(act,chesslist,computer_color) # 不一定真的是computer
+        humanscore = evalpoint(act,chesslist,int(not computer_color))
 
-            cslst[i][j] = chess
-            evalscore = judgepoint(cslst,i,j)
-            pointscore = max(evalscore,pointscore)
-
-        score_dict[act] = pointscore
+        score_dict[act] = max(computerscore,humanscore) # 存储分数
 
     trimmed_actions = sorted(score_dict.items(), key=lambda x: x[1], reverse=True)
     if len(trimmed_actions) > AI_LIMITED_MOVE_NUM:
@@ -373,8 +406,9 @@ def trim_actions(chesslist,actions):
     rt_list = [act[0] for act in trimmed_actions]
     return rt_list
 
-
 def alphabeta(board,depth,alpha,beta,color:int,computercolor:int): # 人工智能走子
+    """Alpha-Beta Pruning
+    """
 
     if depth == 0:
         A = evalBoard(board,computercolor)
@@ -383,7 +417,7 @@ def alphabeta(board,depth,alpha,beta,color:int,computercolor:int): # 人工智�
     if color == computercolor: # 当前是电脑方
 
         maxEval=ninf
-        trimmedactions = trim_actions(board,actions(board))
+        trimmedactions = trim_actions(board,actions(board),computercolor)
 
         for action in trimmedactions:
 
@@ -414,7 +448,7 @@ def alphabeta(board,depth,alpha,beta,color:int,computercolor:int): # 人工智�
     else:
 
         minEval=pinf
-        trimmedactions = trim_actions(board,actions(board))
+        trimmedactions = trim_actions(board,actions(board),computercolor)
 
         for action in trimmedactions:
 
@@ -436,7 +470,7 @@ def actions(board):
 
     """
     actions = set()
-    for i in range(4,19):
+    for i in range(4,19): 
         for j in range(4,19):
             if board[i][j] == 0 or board[i][j] == 1:
                 for k in range(max(4,i-1),min(i+2,19)):
@@ -468,10 +502,11 @@ class evalBoard():
         self.wst = [0]
 
         self.tuple_dict = {
-            "111113": self.bcf,       # 黑棋连5
 
-            "000003": self.wcf,       # 白棋连5
-                                      # 黑棋连4
+            "Y1111Y": self.blf,     # 黑棋活四
+
+            "Y0000Y": self.wlf,     # 白棋活四
+
             "111Y10": self.bif,
             "11Y110": self.bif,
             "Y11110": self.bif,    # 黑棋冲四
@@ -480,20 +515,18 @@ class evalBoard():
             "00Y001": self.wif,
             "Y00001": self.wif,     # 白棋冲四
 
-            "Y1111Y": self.blf, # 黑棋活四
-
-            "Y0000Y": self.wlf, # 白棋活四
-
-            "100001": self.wdf, # 白棋死四
+            "100001": self.wdf,    # 白棋死四
             "N00001": self.wdf,
 
-            "Y111Y3": self.blt, # 黑棋活三
+            "Y111Y3": self.blt,
+            "y11Y1Y": self.blt,     # 黑棋活三
 
-            "Y000Y3": self.wlt , # 白棋活三
+            "Y000Y3": self.wlt ,
+            "Y00Y0Y": self.wlt , # 白棋活三
 
-            "Y11103": self.bst, # 黑棋眠三
+            "Y11103": self.bst,    # 黑棋眠三
 
-            "Y00013": self.wst # 白棋眠三
+            "Y00013": self.wst    # 白棋眠三
         }
             
  
@@ -504,17 +537,15 @@ class evalBoard():
         Tup = Tup.replace("3","1")
 
         if Tup in self.tuple_dict:
-            self.tuple_dict[Tup][0] += 1
+            self.tuple_dict[Tup][0] += 0.5
         else:
             Tup[5] = 3
             if Tup in self.tuple_dict:
-                self.tuple_dict[Tup][0] += 1
+                self.tuple_dict[Tup][0] += 0.5
 
 
     def get_score(self):
         """
-        黑棋连5,评分为10000
-        白棋连5,评分为 -10000
         黑棋两个冲四可以当成一个活四
         白棋有活四，评分为 -9050
         白棋有冲四，评分为 -9040
@@ -538,25 +569,22 @@ class evalBoard():
                     except: # 越界
                         continue
 
-        if self.bcf[0] > 0: # 黑棋连5，赢
-            self.score = 10000
-        elif self.wcf[0] > 0: # 白棋连5，输
-            self.score = -10000
-        elif self.wlf[0] > 0: # 白棋活4，输
-            self.score = -9050
+        if self.wlf[0] > 0: # 白棋活4，输
+            return -9050
         elif self.wif[0] > 0: # 白棋冲四，输
-            self.score = -9040
+            return -9040
         elif self.bif[0] > 1 or self.blf[0] > 0: # 黑棋冲四多于1个或黑棋活四
-            self.score = 9030
+            return 9030
         elif self.blf[0] > 0 and self.blt[0] > 0: # 黑棋活四和活三，赢
-            self.score = 9020
+            return 9020
         elif self.wlt[0] > 0: # 白棋活三，输
-            self.score = -9010
+            return -9010
         elif self.blt[0] > 1: # 黑棋双活三，白棋无活三，赢
-            self.score = 9000
+            return 9000
         elif self.wdf[0] > 0: # 白棋死四，惩罚
-            self.score = -10
-        return self.score
+            return -100*(self.wdf[0])
+        else:
+            return max(-99,(self.blt[0]-self.wlt[0])*10+(self.bst[0]-self.wst[0]))
 
 def win(lst,x,y):
     """判断是否胜利，只要判断(i,j)附近是否有五子连珠即可
