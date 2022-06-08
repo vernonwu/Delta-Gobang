@@ -6,7 +6,6 @@ import sys
 import win32ui
 import copy
 import numpy as np
-import math as m
 import os
 
 
@@ -32,7 +31,9 @@ play_chess_sound.set_volume(0.2)
 button_sound = pygame.mixer.Sound("music/button.wav")
 button_sound.set_volume(0.2)
 victor_sound = pygame.mixer.Sound("music/victory.wav")
-victor_sound.set_volume(0.2)
+victor_sound.set_volume(1)
+background_music = pygame.mixer.Sound("music/Bgm.wav")
+background_music.set_volume(0)
 pygame.display.set_caption('五子不行V2')
 
 # 定义极限
@@ -70,12 +71,13 @@ def draw_chessboard(screen):
     pygame.draw.rect(screen, button, [640, 295, 60, 30], 3)
     pygame.draw.rect(screen, button, [720, 295, 60, 30], 3)
 
+
     s_font = pygame.font.Font('font1.ttf', 30)
     d_font = pygame.font.Font('font1.ttf', 20)
     text1 = s_font.render("人人对战", True, button)
     text2 = s_font.render("人机对战", True, button)
     text3 = s_font.render("悔棋", True, button)
-    text4 = s_font.render("重新开始", True, button)
+    text4 = s_font.render("回主菜单", True, button)
     text5 = s_font.render("退出游戏", True, button)
     text6 = s_font.render("载入棋谱", True, button)
     text7 = d_font.render("前一步", True, button)
@@ -104,17 +106,22 @@ def draw_chessboard_with_chessman(chesslist, screen):
     screen.fill(background)
     screen.blit(background_jpg, (0, 0))
     draw_chessboard(screen)
-    for i in range(4, 19):
-        for j in range(4, 19):
+    for i in range(4, 20):
+        for j in range(4, 20):
                 draw_chessman(i, j, screen, chesslist[i][j])
 
-
-def choose_save(screen, chesslist, chessindex, index):
+def draw_AI_takeover(screen,flag):
     pygame.draw.rect(screen, button, [640, 340, 140, 50], 5)
     s_font = pygame.font.Font('font1.ttf', 30)
-    text = s_font.render("保存棋谱", True, button)
+    if(flag):
+        text = s_font.render("托管", True, button)
+    else:
+        pygame.draw.line(screen, BLACK, (710, 345), (710, 385), 2)
+        text = s_font.render("    保存", True, button)
     screen.blit(text, (650, 350))
     pygame.display.update()
+
+def choose_save(chesslist, chessindex, index):
     while True:
         for event in pygame.event.get():
             if event.type == MOUSEBUTTONDOWN:
@@ -180,6 +187,7 @@ def choose_mode():
 
 
 def choose_button(x, y):
+    #[640, 340, 140, 50]
     """功能键:退出游戏和重新开始
     """
     # 如果点击‘重新开始’
@@ -246,21 +254,21 @@ def load_chess():
     index_max = lst_tmp[47][0]
     f.close()
     chessmap = [[['N' for _ in range(23)] for _ in range(23)] for _ in range(int(index_max))]
-    for i in range(4, 19):
-        for j in range(4, 19):
+    for i in range(4, 20):
+        for j in range(4, 20):
             if c_list[i][j] != 'Y' and c_list[i][j] != 'N': 
                 c_list[i][j] = int(c_list[i][j])
             if c_index[i][j] != 'Y' and c_index[i][j] != 'N':
                 c_index[i][j] = int(c_index[i][j])
     num = int(index_max)
     while num > 0:
-        for i in range(4, 19):
-            for j in range(4, 19):
+        for i in range(4, 20):
+            for j in range(4, 20):
                 if c_index[i][j] == num: # 如果该位置有棋子
                     c_list[i][j] = 'Y'
-        for k in range(4, 19):
-            for l in range(4, 19):
-                chessmap[num - 1][k][l] = c_list[k][l]
+        for k in range(4, 20):
+            for l in range(4, 20):
+                chessmap[num - 1][k][l] = c_list[k+1][l]
         num = num - 1
     return chessmap
 
@@ -292,6 +300,7 @@ def play_chess(screen, chessmap):
                         
 
             if event.type == MOUSEBUTTONDOWN :
+                choose_button(event.pos[0], event.pos[1])
                 if event.button == 1: # 如果点击鼠标左键
                     x, y = event.pos[0], event.pos[1] # 获取鼠标点击位置
                     if 640 < x < 700 and 290 < y < 320 and k > 0:
@@ -346,7 +355,7 @@ def tip(screen, chesslist, color, choose, i1, j1, i2, j2):
         pygame.draw.rect(screen, button, [(i1 - 4) * 40 + 15, (j1 - 4) * 40 + 15, 30, 30], 3)
         pygame.draw.rect(screen, button, [(i2 - 4) * 40 + 15, (j2 - 4) * 40 + 15, 30, 30], 3)
 
-def judgepoint(evalst):
+def judgepoint(evalst,act):
     """判断单个位置的分数
 
     """
@@ -355,7 +364,7 @@ def judgepoint(evalst):
     for elem in evalst:
         if elem.count("11111")+elem.count("00000") > 0 : # 如果有活5
             return SCORE_FIVE
-        elif elem[1:10].count("1111Y")+elem[1:10].count("Y1111")+elem[1:10].count("0000Y")+elem[1:10].count("Y0000") > 0 : # 如果有活四
+        elif elem[1:10].count("Y1111Y")+elem[1:10].count("Y0000Y") > 0 : # 如果有活四
             return SCORE_FOUR
         elif elem[1:10].count("Y11110")+elem[1:10].count("Y00001")+elem[1:10].count("0Y000")+elem[1:10].count("000Y0")+elem[1:10].count("1Y111")+elem[1:10].count("111Y1") > 0 : # 如果有眠四
             return SCORE_SFOUR
@@ -364,11 +373,12 @@ def judgepoint(evalst):
         elif elem[2:9].count("Y000Y") + elem[2:9].count("Y0Y00Y")+elem[2:9].count("Y00Y0Y") > 0 :
             SCORE_THREE_COUNT_H += 1
     if SCORE_THREE_COUNT_C > 1 or SCORE_THREE_COUNT_H > 1:
-        return 2500
+        return 2000
     elif SCORE_THREE_COUNT_C > 0  or SCORE_THREE_COUNT_H> 0:
         return 100
     else:
-        return 0
+        neighbourhood = evalst[act[0]-1:act[0]+2][act[1]-1:act[1]+2]
+        return max(neighbourhood.count("1"),neighbourhood.count("0"))
 
 def evalpoint(act,chesslist,chesscolor):
     directions = [[1,0],[1,1],[0,1],[-1,1]]
@@ -385,13 +395,13 @@ def evalpoint(act,chesslist,chesscolor):
         except:  # 越界
             continue
     chesslist[i][j] = 'Y'
-    return judgepoint(evalst)
+    return judgepoint(evalst,act)
 
 def trim_actions(chesslist,actions,computer_color):
     """初步评估,挑选出15个最优的选点
     """
 
-    AI_LIMITED_MOVE_NUM = 20
+    AI_LIMITED_MOVE_NUM = 15
     score_dict = {}
 
     for act in actions:
@@ -427,6 +437,7 @@ def alphabeta(board,depth,alpha,beta,color:int,computercolor:int): # 人工智�
             # 特殊情况，赢了
             if win(tmpboard,action[0],action[1]):
                 if depth == 3:
+                    print("Your Turn!")
                     return action
                 else:
                     return 10000
@@ -440,7 +451,8 @@ def alphabeta(board,depth,alpha,beta,color:int,computercolor:int): # 人工智�
             if beta <= alpha: # 如果在某个节点处，对方的最小值小于我方最大，那么对面肯定不会选这一支（因为传的alphabeta值>=alpha）,剪掉这一action.
                 break
         if depth == 3: # 如果是最大深度，则返回最优选择
-            print ('Maximum score for the computer is %d' % maxEval)
+            # print ('Maximum score for the computer is %d' % maxEval)
+            print("Your Turn!")
             return bestAct
         else: # 否则继续搜索
             return maxEval
@@ -544,8 +556,10 @@ class evalBoard():
                 self.tuple_dict[Tup][0] += 0.5
 
 
+
     def get_score(self):
         """
+        按照习惯，将作为优化主体的“电脑”称为“黑棋”
         黑棋两个冲四可以当成一个活四
         白棋有活四，评分为 -9050
         白棋有冲四，评分为 -9040
@@ -611,7 +625,7 @@ def displaywin(screen,wincolor,chesslist,chessindex,index):
     显示胜利界面
     '''
     pop_window(screen, wincolor) # 弹出胜利的界面
-    choose_save(screen, chesslist, chessindex, index) # 激活保存按钮
+    choose_save(chesslist, chessindex, index) # 激活保存按钮
 
 def key_control(screen, mode):
     """用于接收用户鼠标的信息
@@ -631,6 +645,7 @@ def key_control(screen, mode):
         choose_turn_result = not choose_turn_result # order与choose_turn_result取反
         chessindex[11][11] = index # 将最中间的棋子索引记录为0
         index += 1
+    draw_AI_takeover(screen,1)
 
     # 人类玩家开始落子
     for event in pygame.event.get():
@@ -655,7 +670,9 @@ def key_control(screen, mode):
                             chessindex[i][j] = index
                             index += 1
                             if win(lst,i,j):
+                                draw_AI_takeover(screen,0)
                                 victor_sound.play(0)
+                                pygame.display.update()
                                 displaywin(screen,wincolor,lst,chessindex,index)
                             # 将电脑方操作放在了这里，是为了防止误触。即当人类方落子无效时，电脑方便不会行动。
                             if not mode and running:
@@ -671,6 +688,7 @@ def key_control(screen, mode):
                                 chessindex[a[0]][a[1]] = index
                                 index += 1
                                 if win(lst,a[0],a[1]):
+                                    draw_AI_takeover(screen,0)
                                     victor_sound.play(0)
                                     displaywin(screen,wincolor,lst,chessindex,index)
                             if mode and running: 
@@ -689,7 +707,7 @@ def key_control(screen, mode):
                         lst[i_temp1][j_temp1] = 'Y'
                         order = not order
                     draw_chessboard_with_chessman(lst, screen)
-                choose_button(x, y)
+            choose_button(x, y)
         # 点X也退出游戏
         elif event.type == QUIT:
             pygame.quit()
@@ -729,6 +747,8 @@ def main():
     choose_turn_result = 0
     # 选择人人还是人机
     mode, load = choose_mode()
+    background_music.play(-1) # -1是循环播放
+
     if not mode: # 人人对战
         choose_turn_result = choose_turn(screen) #选择先手
     if load:
