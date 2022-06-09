@@ -1,3 +1,9 @@
+'''
+    Name:DeltaGobang
+    Function:五子棋游戏主程序,支持人人/人机对战/保存棋谱/悔棋
+    Author:吴霄鹤
+    Last edit at: 2022-06-09
+'''
 from asyncio.windows_events import NULL
 from re import S
 import pygame
@@ -15,7 +21,9 @@ import os
 #         absolute_path = os.path.join(sys._MEIPASS, relative)
 #     else: absolute_path = os.path.join(relative)
 #     return absolute_path
-
+'''
+    加载图片和背景音乐
+'''
 pygame.init()
 BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
@@ -44,12 +52,11 @@ def print_message(screen,text):
     """打印文字"""
     font = pygame.font.Font('font1.ttf', 20)
     text = font.render(text, True, button)
-    screen.blit(text, (660, 190))
+    screen.blit(text, (640, 190))
     pygame.display.update()
 
 def draw_chessboard(screen):
-    """绘制棋盘
-    大小为15*15和一些功能按钮。
+    """绘制棋盘,大小为15*15,和一些功能按钮。
     """
     global background, checkerboard, button
     # 画棋盘
@@ -109,6 +116,7 @@ def draw_chessman(x, y, screen, color):
 
 
 def draw_chessboard_with_chessman(chesslist, screen):
+    """全盘绘制(包括棋盘和棋子)"""
     screen.fill(background)
     screen.blit(background_jpg, (0, 0))
     draw_chessboard(screen)
@@ -117,17 +125,18 @@ def draw_chessboard_with_chessman(chesslist, screen):
                 draw_chessman(i, j, screen, chesslist[i][j])
 
 def draw_AI_takeover(screen,flag):
+    """绘制托管按钮,复用为保存按钮"""
     pygame.draw.rect(screen, button, [640, 340, 140, 50], 5)
     s_font = pygame.font.Font('font1.ttf', 30)
     if(flag):
-        text = s_font.render("托管", True, button)
+        text = s_font.render("切换模式", True, button)
     else:
-        pygame.draw.line(screen, BLACK, (710, 345), (710, 385), 2)
-        text = s_font.render("    保存", True, button)
+        text = s_font.render("棋谱保存", True, button)
     screen.blit(text, (650, 350))
     pygame.display.update()
 
 def choose_save(screen,chesslist, chessindex, index):
+    """保存棋谱的按钮"""
     while True:
         for event in pygame.event.get():
             if event.type == MOUSEBUTTONDOWN:
@@ -145,8 +154,7 @@ def choose_save(screen,chesslist, chessindex, index):
 
 def choose_turn(screen):
     """
-    选择人机先手还是玩家先手, 1为电脑,0为玩家
-    :return:
+    绘制方框突出显示最近的落子；选择人机先手还是玩家先手, 1为电脑,0为玩家
     """
     pygame.draw.rect(screen, button, [640, 130, 100, 30], 3)
     pygame.draw.rect(screen, button, [640, 170, 100, 30], 3)
@@ -169,7 +177,7 @@ def choose_turn(screen):
 
 
 def choose_mode():
-    """选择人人对战还是人机对战还是载入棋谱
+    """选择人人对战/人机对战/载入棋谱
 
     """
     mode = 1
@@ -212,6 +220,7 @@ def choose_button(x, y):
         sys.exit()
 
 def save_chess(screen,chesslist, chessindex, index):
+    """保存棋谱"""
     dlg = win32ui.CreateFileDialog(0)
     dlg.SetOFNInitialDir(r"C:\Users\lenovo\Desktop")
     flag = dlg.DoModal()
@@ -239,6 +248,7 @@ def save_chess(screen,chesslist, chessindex, index):
 
 
 def load_chess(screen):
+    """载入棋谱"""
     dlg = win32ui.CreateFileDialog(1)  # 1表示打开文件对话框
     dlg.SetOFNInitialDir(r"C:\Users\lenovo\Desktop")  # 设置打开文件对话框中的初始显示目录
     flag = dlg.DoModal() # 打开文件对话框
@@ -280,7 +290,7 @@ def load_chess(screen):
 
 def play_chess(screen, chessmap): 
     '''
-    播放棋谱
+    播放棋谱,允许键盘控制/鼠标控制/人类和AI落子(不会污染原棋谱)
     '''
     global temp_color, ktmpcolor,flag
     k = -1
@@ -338,19 +348,21 @@ def play_chess(screen, chessmap):
                         temp_color = 1-temp_color
                         play_chess_sound.play(0)
 
-                    if 650 < x < 790 and 350 < y < 380:   
-                        print_message (screen,"Pending...")
+                    if 650 < x < 790 and 350 < y < 380:   # AI落子
+                        print_message (screen,"让Alex来帮您吧!")
+                        pygame.display.update()
                         if(flag):
                             ktmpcolor = temp_color
                             flag = 0
                         a = alphabeta(Chessmap[k],3,ninf,pinf,ktmpcolor,ktmpcolor)
+                        play_chess_sound.play(0)
                         Chessmap[k][a[0]][a[1]] = ktmpcolor
                         draw_chessman(a[0], a[1], screen, ktmpcolor)
                         ktmpcolor = 1 - ktmpcolor
-                        play_chess_sound.play(0)
+                        draw_chessboard_with_chessman(Chessmap[k], screen)
                         pygame.draw.rect(screen, button, [(a[0] - 4) * 40 + 15, (a[1]- 4) * 40 + 15, 30, 30], 3)
 
-                    else:
+                    else: #人类落子
                         for i in range(4, 19):
                             for j in range(4, 19):
                                 if ((i-4) * 40 + 15) < x < ((i-4) * 40 + 55) and ((j-4) * 40 + 15) < y < ((j-4) * 40 + 55) and chessmap[k][i][j] == 'Y' and running: 
@@ -413,7 +425,7 @@ def tip(screen, chesslist, color, choose, i1, j1, i2, j2):
         pygame.draw.rect(screen, button, [(i2 - 4) * 40 + 15, (j2 - 4) * 40 + 15, 30, 30], 3)
 
 def judgepoint(evalst,act):
-    """判断单个位置的分数
+    """启发式评估:判断单个位置的分数
 
     """
     SCORE_FIVE, SCORE_FOUR, SCORE_SFOUR= 10000, 2000, 1000
@@ -448,6 +460,7 @@ def judgepoint(evalst,act):
         return max(neighbourhood.count(1),neighbourhood.count(0))
 
 def evalpoint(act,chesslist,chesscolor):
+    '''启发式评估函数'''
     directions = [[1,0],[1,1],[0,1],[-1,1]]
     i, j = act[0], act[1]
     chesslist[i][j] = chesscolor
@@ -465,7 +478,7 @@ def evalpoint(act,chesslist,chesscolor):
     return judgepoint(evalst,act)
 
 def trim_actions(chesslist,actions,computer_color):
-    """初步评估,挑选出15个最优的选点,可能牺牲一定的准确度
+    """初步修剪,挑选出15个最优的选点,可能牺牲一定的准确度
     """
 
     AI_LIMITED_MOVE_NUM = 15
@@ -611,6 +624,7 @@ class evalBoard():
             
  
     def match_tuple(self,Tup:str):
+        '''匹配tuple_dict中的tuple,并返回分数.'''
 
         Tup = Tup.replace(self.x,"3")
         Tup = Tup.replace(self.y,"0")
@@ -696,6 +710,9 @@ def displaywin(screen,wincolor,chesslist,chessindex,index):
     显示胜利界面
     '''
     pop_window(screen, wincolor) # 弹出胜利的界面
+    draw_chessboard_with_chessman(chesslist,screen)
+    draw_AI_takeover(screen,0)
+    pygame.display.update()
     choose_save(screen,chesslist, chessindex, index) # 激活保存按钮
 
 def key_control(screen, mode):
@@ -743,7 +760,6 @@ def key_control(screen, mode):
                             chessindex[i][j] = index
                             index += 1
                             if win(lst,i,j):
-                                draw_AI_takeover(screen,0)
                                 victor_sound.play(0)
                                 displaywin(screen,wincolor,lst,chessindex,index)
                             # 将电脑方操作放在了这里，是为了防止误触。即当人类方落子无效时，电脑方便不会行动。
@@ -789,7 +805,7 @@ def key_control(screen, mode):
 
 
 def main():
-    # 定义全局变量
+    '''主函数'''
     global background, checkerboard, button, order, lst, score, running, background_jpg, wincolor, i_temp1, j_temp1, \
         i_temp2, j_temp2, choose_turn_result, index, chessindex, load, repent, i_temp3, j_temp3,mode
     pygame.init()
