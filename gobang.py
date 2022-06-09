@@ -685,6 +685,7 @@ def key_control(screen, mode):
                             repent = True # 悔棋为真
                             draw_chessman(i, j, screen, color)
                             play_chess_sound.play(0)
+                            pygame.display.update()
                             # (i_temp1,j_temp1)为本次落子的位置
                             i_temp1 = i
                             j_temp1 = j
