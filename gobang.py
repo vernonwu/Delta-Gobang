@@ -33,7 +33,7 @@ button_sound.set_volume(0.2)
 victor_sound = pygame.mixer.Sound("music/victory.wav")
 victor_sound.set_volume(1)
 background_music = pygame.mixer.Sound("music/Bgm.wav")
-background_music.set_volume(0.3)
+background_music.set_volume(0)
 pygame.display.set_caption('五子不行V2')
 
 # 定义极限
@@ -276,12 +276,21 @@ def play_chess(screen, chessmap):
     '''
     播放棋谱
     '''
-    global temp_color, ktmpcolor
+    global temp_color, ktmpcolor,flag
     k = -1
     k_max = len(chessmap) - 1
     temp_color = 0
-    
+    flag = 1
+    Chessmap = copy.deepcopy(chessmap)
+
     while True:
+
+        pygame.draw.rect(screen, button, [640, 340, 140, 50], 5)
+        s_font = pygame.font.Font('font1.ttf', 30)
+        text = s_font.render("AI推荐", True, button)
+        screen.blit(text, (650, 350))
+        pygame.display.update()
+        
         for event in pygame.event.get():
 
             if event.type == KEYDOWN:
@@ -289,15 +298,17 @@ def play_chess(screen, chessmap):
                 if key == K_ESCAPE:
                     return
                 if (key == pygame.K_LEFT) and k > 0:
+                        flag = 1
                         k -= 1
-                        draw_chessboard_with_chessman(chessmap[k], screen)
+                        draw_chessboard_with_chessman(Chessmap[k], screen)
                         play_chess_sound.play(0)
                         temp_color = 1-temp_color
                         
                    
                 if (key == pygame.K_RIGHT) and k < k_max:
+                        flag = 1
                         k += 1
-                        draw_chessboard_with_chessman(chessmap[k], screen)
+                        draw_chessboard_with_chessman(Chessmap[k], screen)
                         play_chess_sound.play(0)
                         temp_color = 1-temp_color
                         
@@ -308,23 +319,42 @@ def play_chess(screen, chessmap):
                     x, y = event.pos[0], event.pos[1] # 获取鼠标点击位置
 
                     if 640 < x < 700 and 290 < y < 320 and k > 0:
+                        flag = 1
                         k -= 1
-                        draw_chessboard_with_chessman(chessmap[k], screen)
+                        draw_chessboard_with_chessman(Chessmap[k], screen)
                         temp_color = 1-temp_color
                         play_chess_sound.play(0)
 
                     if 720 < x < 780 and 290 < y < 320 and k < k_max:
+                        flag = 1
                         k += 1
-                        draw_chessboard_with_chessman(chessmap[k], screen)
+                        draw_chessboard_with_chessman(Chessmap[k], screen)
                         temp_color = 1-temp_color
                         play_chess_sound.play(0)
-                        
+
+                    if 650 < x < 790 and 350 < y < 380:   
+                        print ("Calculating next move...")
+                        if(flag):
+                            ktmpcolor = temp_color
+                            flag = 0
+                        a = alphabeta(Chessmap[k],3,ninf,pinf,ktmpcolor,ktmpcolor)
+                        Chessmap[k][a[0]][a[1]] = ktmpcolor
+                        draw_chessman(a[0], a[1], screen, ktmpcolor)
+                        ktmpcolor = 1 - ktmpcolor
+                        play_chess_sound.play(0)
+                        pygame.draw.rect(screen, button, [(a[0] - 4) * 40 + 15, (a[1]- 4) * 40 + 15, 30, 30], 3)
+
                     else:
                         for i in range(4, 19):
                             for j in range(4, 19):
                                 if ((i-4) * 40 + 15) < x < ((i-4) * 40 + 55) and ((j-4) * 40 + 15) < y < ((j-4) * 40 + 55) and chessmap[k][i][j] == 'Y' and running: 
-                                    ktmpcolor = temp_color
-                                    draw_chessman(i, j, screen, temp_color)
+                                    if(flag):
+                                        ktmpcolor = temp_color
+                                        flag = 0
+                                    draw_chessman(i, j, screen, ktmpcolor)
+                                    pygame.display.update()
+                                    pygame.draw.rect(screen, button, [(i - 4) * 40 + 15, (j- 4) * 40 + 15, 30, 30], 3)
+                                    Chessmap[k][i][j] = ktmpcolor
                                     ktmpcolor = 1 - ktmpcolor
                                     play_chess_sound.play(0)
                                     break
@@ -381,25 +411,35 @@ def judgepoint(evalst,act):
 
     """
     SCORE_FIVE, SCORE_FOUR, SCORE_SFOUR= 10000, 2000, 1000
-    SCORE_THREE_COUNT_C,SCORE_THREE_COUNT_H = 0,0
+    SCORE_THREE_COUNT_B,SCORE_THREE_COUNT_W = 0,0
+    SCORE_SFOUR_COUNT_B,SCORE_SFOUR_COUNT_W = 0,0
+    lfive_count,lfour_count = 0,0
+
     for elem in evalst:
-        if elem.count("11111")+elem.count("00000") > 0 : # 如果有活5
+        lfive_count += elem.count("11111")+elem.count("00000") 
+        lfour_count += elem[1:10].count("Y1111Y")+elem[1:10].count("Y0000Y")
+        SCORE_SFOUR_COUNT_B += elem[1:10].count("Y11110")+elem[1:10].count("1Y111")+elem[1:10].count("111Y1")
+        SCORE_SFOUR_COUNT_W += elem[1:10].count("Y00001")+elem[1:10].count("0Y000")+elem[1:10].count("000Y0")
+        SCORE_THREE_COUNT_B += elem[2:9].count("Y111Y") + elem[2:9].count("Y1Y11Y")+elem[2:9].count("Y11Y1Y")
+        SCORE_THREE_COUNT_W += elem[2:9].count("Y000Y") + elem[2:9].count("Y0Y00Y")+elem[2:9].count("Y00Y0Y")
+
+        if lfive_count > 0 : # 如果有活5
             return SCORE_FIVE
-        elif elem[1:10].count("Y1111Y")+elem[1:10].count("Y0000Y") > 0 : # 如果有活四
+        elif lfour_count> 0 : # 如果有活四
             return SCORE_FOUR
-        elif elem[1:10].count("Y11110")+elem[1:10].count("Y00001")+elem[1:10].count("0Y000")+elem[1:10].count("000Y0")+elem[1:10].count("1Y111")+elem[1:10].count("111Y1") > 0 : # 如果有眠四
-            return SCORE_SFOUR
-        elif elem[2:9].count("Y111Y") + elem[2:9].count("Y1Y11Y")+elem[2:9].count("Y11Y1Y") > 0 :  # 如果有活三
-            SCORE_THREE_COUNT_C += 1
-        elif elem[2:9].count("Y000Y") + elem[2:9].count("Y0Y00Y")+elem[2:9].count("Y00Y0Y") > 0 :
-            SCORE_THREE_COUNT_H += 1
-    if SCORE_THREE_COUNT_C > 1 or SCORE_THREE_COUNT_H > 1:
+
+    if (SCORE_THREE_COUNT_B > 0 and SCORE_SFOUR_COUNT_B>0) or (SCORE_THREE_COUNT_W > 0 and SCORE_SFOUR_COUNT_W>0):
+        return SCORE_FOUR
+    elif SCORE_THREE_COUNT_B > 1 or SCORE_THREE_COUNT_W > 1:
         return 1500
-    elif SCORE_THREE_COUNT_C > 0  or SCORE_THREE_COUNT_H> 0:
+    elif SCORE_SFOUR_COUNT_B > 0 or SCORE_SFOUR_COUNT_W > 0:
+        return 1000
+    elif SCORE_THREE_COUNT_B > 0  or SCORE_THREE_COUNT_W> 0:
         return 100
+
     else:
         neighbourhood = evalst[act[0]-1:act[0]+2][act[1]-1:act[1]+2]
-        return max(neighbourhood.count("1"),neighbourhood.count("0"))
+        return max(neighbourhood.count(1),neighbourhood.count(0))
 
 def evalpoint(act,chesslist,chesscolor):
     directions = [[1,0],[1,1],[0,1],[-1,1]]
@@ -422,7 +462,7 @@ def trim_actions(chesslist,actions,computer_color):
     """初步评估,挑选出15个最优的选点
     """
 
-    AI_LIMITED_MOVE_NUM = 15
+    AI_LIMITED_MOVE_NUM = 20
     score_dict = {}
 
     for act in actions:
@@ -536,6 +576,9 @@ class evalBoard():
 
         self.tuple_dict = {
 
+            "111113": self.bcf,
+            "000003": self.wcf,
+
             "Y1111Y": self.blf,     # 黑棋活四
 
             "Y0000Y": self.wlf,     # 白棋活四
@@ -603,8 +646,11 @@ class evalBoard():
                         self.match_tuple(elem)
                     except: # 越界
                         continue
-
-        if self.wlf[0] > 0: # 白棋活4，输
+        if self.wcf[0] > 0:
+            return -10000
+        elif self.bcf[0] > 0:
+            return 10000
+        elif self.wlf[0] > 0: # 白棋活4，输
             return -9050
         elif self.wif[0] > 0: # 白棋冲四，输
             return -9040
@@ -619,7 +665,7 @@ class evalBoard():
         elif self.wdf[0] > 0: # 白棋死四，惩罚
             return -100*(self.wdf[0])
         else:
-            return max(-99,(self.blt[0]-self.wlt[0])*10+(self.bst[0]-self.wst[0]))
+            return max(-99,(self.blt[0]-self.wlt[0])*5+(self.bst[0]-self.wst[0]))
 
 def win(lst,x,y):
     """判断是否胜利，只要判断(i,j)附近是否有五子连珠即可
