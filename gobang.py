@@ -6,8 +6,8 @@ import sys
 import win32ui
 import copy
 import numpy as np
+from tkinter import *
 import os
-
 
 # define absolute path
 # def resource_path(relative): 
@@ -23,8 +23,8 @@ RED = (255, 0, 0)
 background = (201, 202, 187)
 checkerboard = (80, 80, 80)
 button = (52, 53, 44)
-black_chessman = pygame.image.load('wuziqi/Black_chess.png')
-white_chessman = pygame.image.load('wuziqi/White_chess.png')
+black_chessman = pygame.image.load('image/Black_chess.png')
+white_chessman = pygame.image.load('image/White_chess.png')
 # 音乐
 play_chess_sound = pygame.mixer.Sound("music/play_chess.wav")
 play_chess_sound.set_volume(0.2)
@@ -33,13 +33,19 @@ button_sound.set_volume(0.2)
 victor_sound = pygame.mixer.Sound("music/victory.wav")
 victor_sound.set_volume(1)
 background_music = pygame.mixer.Sound("music/Bgm.wav")
-background_music.set_volume(0)
+background_music.set_volume(0.3)
 pygame.display.set_caption('五子不行V2')
 
 # 定义极限
 pinf = float('inf')
 ninf = float('-inf')
 
+def print_message(screen,text):
+    """打印文字"""
+    font = pygame.font.Font('font1.ttf', 20)
+    text = font.render(text, True, button)
+    screen.blit(text, (660, 190))
+    pygame.display.update()
 
 def draw_chessboard(screen):
     """绘制棋盘
@@ -121,7 +127,7 @@ def draw_AI_takeover(screen,flag):
     screen.blit(text, (650, 350))
     pygame.display.update()
 
-def choose_save(chesslist, chessindex, index):
+def choose_save(screen,chesslist, chessindex, index):
     while True:
         for event in pygame.event.get():
             if event.type == MOUSEBUTTONDOWN:
@@ -129,11 +135,11 @@ def choose_save(chesslist, chessindex, index):
                     x, y = event.pos[0], event.pos[1]
                     if 650 < x < 790 and 350 < y < 380:
                         try:
-                            save_chess(chesslist, chessindex, index)
+                            save_chess(screen,chesslist, chessindex, index)
                         except:
-                            print("Save Failed!")
+                            print_message(screen,"Save Failed!")
                         else:
-                            print("Save Succeeded!")
+                            print_message(screen,"Save Succeeded!")
                     choose_button(x, y)
 
 
@@ -205,15 +211,15 @@ def choose_button(x, y):
         pygame.quit()
         sys.exit()
 
-def save_chess(chesslist, chessindex, index):
+def save_chess(screen,chesslist, chessindex, index):
     dlg = win32ui.CreateFileDialog(0)
     dlg.SetOFNInitialDir(r"C:\Users\lenovo\Desktop")
     flag = dlg.DoModal()
     filename = dlg.GetPathName()
     if flag == 1:
-        print("Save as", filename)
+        print("Saved as", filename)
     else:
-        print("Save Failed!")
+        print_message(screen,"Save Failed!")
     for i in range(23):
         for j in range(23):
             chesslist[i][j] = str(chesslist[i][j])
@@ -232,7 +238,7 @@ def save_chess(chesslist, chessindex, index):
     f.close()
 
 
-def load_chess():
+def load_chess(screen):
     dlg = win32ui.CreateFileDialog(1)  # 1表示打开文件对话框
     dlg.SetOFNInitialDir(r"C:\Users\lenovo\Desktop")  # 设置打开文件对话框中的初始显示目录
     flag = dlg.DoModal() # 打开文件对话框
@@ -240,7 +246,7 @@ def load_chess():
     if flag == 1:
         print("Open", filename)
     else:
-        print("Open Failed!")
+        print_message(screen,"Open Failed!")
     lst_tmp = []
     f = open(filename, 'r')
     # 读取文件内容
@@ -287,7 +293,7 @@ def play_chess(screen, chessmap):
 
         pygame.draw.rect(screen, button, [640, 340, 140, 50], 5)
         s_font = pygame.font.Font('font1.ttf', 30)
-        text = s_font.render("AI推荐", True, button)
+        text = s_font.render("ALEX推荐", True, button) # 命名参考Amazon公司的语音助手Alexa,并且Alex是常见的男性名（MC的男性角色名），富有亲和力。
         screen.blit(text, (650, 350))
         pygame.display.update()
         
@@ -333,7 +339,7 @@ def play_chess(screen, chessmap):
                         play_chess_sound.play(0)
 
                     if 650 < x < 790 and 350 < y < 380:   
-                        print ("Calculating next move...")
+                        print_message (screen,"Pending...")
                         if(flag):
                             ktmpcolor = temp_color
                             flag = 0
@@ -459,10 +465,10 @@ def evalpoint(act,chesslist,chesscolor):
     return judgepoint(evalst,act)
 
 def trim_actions(chesslist,actions,computer_color):
-    """初步评估,挑选出15个最优的选点
+    """初步评估,挑选出15个最优的选点,可能牺牲一定的准确度
     """
 
-    AI_LIMITED_MOVE_NUM = 20
+    AI_LIMITED_MOVE_NUM = 15
     score_dict = {}
 
     for act in actions:
@@ -498,7 +504,6 @@ def alphabeta(board,depth,alpha,beta,color:int,computercolor:int): # 人工智�
             # 特殊情况，赢了
             if win(tmpboard,action[0],action[1]):
                 if depth == 3:
-                    print("Your Turn!")
                     return action
                 else:
                     return 10000
@@ -513,7 +518,6 @@ def alphabeta(board,depth,alpha,beta,color:int,computercolor:int): # 人工智�
                 break
         if depth == 3: # 如果是最大深度，则返回最优选择
             # print ('Maximum score for the computer is %d' % maxEval)
-            print("Your Turn!")
             return bestAct
         else: # 否则继续搜索
             return maxEval
@@ -692,7 +696,7 @@ def displaywin(screen,wincolor,chesslist,chessindex,index):
     显示胜利界面
     '''
     pop_window(screen, wincolor) # 弹出胜利的界面
-    choose_save(chesslist, chessindex, index) # 激活保存按钮
+    choose_save(screen,chesslist, chessindex, index) # 激活保存按钮
 
 def key_control(screen, mode):
     """用于接收用户鼠标的信息
@@ -739,13 +743,12 @@ def key_control(screen, mode):
                             chessindex[i][j] = index
                             index += 1
                             if win(lst,i,j):
-                                print("GG!")
                                 draw_AI_takeover(screen,0)
                                 victor_sound.play(0)
                                 displaywin(screen,wincolor,lst,chessindex,index)
                             # 将电脑方操作放在了这里，是为了防止误触。即当人类方落子无效时，电脑方便不会行动。
                             if not mode[0] and running:
-                                print ("Calculating next move...")
+                                print_message(screen,"Pending...")
                                 a = alphabeta(lst,3,ninf,pinf,int(not color),int(not color))
                                 repent = True
                                 draw_chessman(a[0], a[1], screen,not color)
@@ -757,7 +760,6 @@ def key_control(screen, mode):
                                 chessindex[a[0]][a[1]] = index
                                 index += 1
                                 if win(lst,a[0],a[1]):
-                                    print("GG!")
                                     draw_AI_takeover(screen,0)
                                     victor_sound.play(0)
                                     displaywin(screen,wincolor,lst,chessindex,index)
@@ -792,7 +794,7 @@ def main():
         i_temp2, j_temp2, choose_turn_result, index, chessindex, load, repent, i_temp3, j_temp3,mode
     pygame.init()
     screen = pygame.display.set_mode((800, 624))
-    background_jpg = pygame.image.load('wuziqi/Background.jpg')
+    background_jpg = pygame.image.load('image/Background.jpg')
     screen.fill(background)
     screen.blit(background_jpg, (0, 0))
     # order = False时黑棋先手
@@ -826,12 +828,12 @@ def main():
         choose_turn_result = choose_turn(screen) #选择先手
     if load:
         try:
-            c_map = load_chess() # 读取棋谱
-            print("Open Succeeded!") 
+            c_map = load_chess(screen) # 读取棋谱
+            print_message(screen,"Open Succeeded!") 
             play_chess(screen, c_map)
             main()
         except:
-            print("Open Failed!")
+            print_message(screen,"Open Failed!")
             main()
     
     while True:
