@@ -33,7 +33,7 @@ button_sound.set_volume(0.2)
 victor_sound = pygame.mixer.Sound("music/victory.wav")
 victor_sound.set_volume(1)
 background_music = pygame.mixer.Sound("music/Bgm.wav")
-background_music.set_volume(0)
+background_music.set_volume(0.3)
 pygame.display.set_caption('五子不行V2')
 
 # 定义极限
@@ -187,7 +187,6 @@ def choose_mode():
 
 
 def choose_button(x, y):
-    #[640, 340, 140, 50]
     """功能键:退出游戏和重新开始
     """
     # 如果点击‘重新开始’
@@ -277,8 +276,11 @@ def play_chess(screen, chessmap):
     '''
     播放棋谱
     '''
+    global temp_color, ktmpcolor
     k = -1
     k_max = len(chessmap) - 1
+    temp_color = 0
+    
     while True:
         for event in pygame.event.get():
 
@@ -290,28 +292,45 @@ def play_chess(screen, chessmap):
                         k -= 1
                         draw_chessboard_with_chessman(chessmap[k], screen)
                         play_chess_sound.play(0)
+                        temp_color = 1-temp_color
                         
                    
                 if (key == pygame.K_RIGHT) and k < k_max:
                         k += 1
                         draw_chessboard_with_chessman(chessmap[k], screen)
                         play_chess_sound.play(0)
-                        pygame.time.delay(200)
+                        temp_color = 1-temp_color
                         
 
             if event.type == MOUSEBUTTONDOWN :
                 choose_button(event.pos[0], event.pos[1])
                 if event.button == 1: # 如果点击鼠标左键
                     x, y = event.pos[0], event.pos[1] # 获取鼠标点击位置
+
                     if 640 < x < 700 and 290 < y < 320 and k > 0:
                         k -= 1
                         draw_chessboard_with_chessman(chessmap[k], screen)
+                        temp_color = 1-temp_color
                         play_chess_sound.play(0)
+
                     if 720 < x < 780 and 290 < y < 320 and k < k_max:
                         k += 1
                         draw_chessboard_with_chessman(chessmap[k], screen)
+                        temp_color = 1-temp_color
                         play_chess_sound.play(0)
-                        choose_button(x, y) 
+                        
+                    else:
+                        for i in range(4, 19):
+                            for j in range(4, 19):
+                                if ((i-4) * 40 + 15) < x < ((i-4) * 40 + 55) and ((j-4) * 40 + 15) < y < ((j-4) * 40 + 55) and chessmap[k][i][j] == 'Y' and running: 
+                                    ktmpcolor = temp_color
+                                    draw_chessman(i, j, screen, temp_color)
+                                    ktmpcolor = 1 - ktmpcolor
+                                    play_chess_sound.play(0)
+                                    break
+                            else:
+                                continue
+                            break
 
         pygame.display.update()
 
@@ -324,11 +343,13 @@ def pop_window(screen, color):
         s_font = pygame.font.Font('font1.ttf', 80)
         text1 = s_font.render("黑棋胜利!", True, RED)
         screen.blit(text1, (120, 270))
+        pygame.display.update()
     elif color:
         pygame.draw.rect(screen, RED, [110, 230, 400, 160], 5)
         s_font = pygame.font.Font('font1.ttf', 80)
         text1 = s_font.render("白棋胜利!", True, RED)
         screen.blit(text1, (120, 270))
+        pygame.display.update()
 
 
 def tip(screen, chesslist, color, choose, i1, j1, i2, j2):
@@ -373,7 +394,7 @@ def judgepoint(evalst,act):
         elif elem[2:9].count("Y000Y") + elem[2:9].count("Y0Y00Y")+elem[2:9].count("Y00Y0Y") > 0 :
             SCORE_THREE_COUNT_H += 1
     if SCORE_THREE_COUNT_C > 1 or SCORE_THREE_COUNT_H > 1:
-        return 2000
+        return 1500
     elif SCORE_THREE_COUNT_C > 0  or SCORE_THREE_COUNT_H> 0:
         return 100
     else:
@@ -637,7 +658,7 @@ def key_control(screen, mode):
         color = 0
     else:
         color = 1
-    tip(screen, lst, color, mode, i_temp1, j_temp1, i_temp2, j_temp2)
+    tip(screen, lst, color, mode[0], i_temp1, j_temp1, i_temp2, j_temp2)
     if choose_turn_result: # 如果电脑先手（初始值由choose_turn得出）
         lst[11][11] = int(color)
         draw_chessman(8, 8, screen, color) # 画最中间
@@ -646,7 +667,6 @@ def key_control(screen, mode):
         chessindex[11][11] = index # 将最中间的棋子索引记录为0
         index += 1
     draw_AI_takeover(screen,1)
-
     # 人类玩家开始落子
     for event in pygame.event.get():
         if event.type == KEYDOWN and event.key == pygame.K_ESCAPE:
@@ -655,6 +675,8 @@ def key_control(screen, mode):
         if event.type == MOUSEBUTTONDOWN:
             if event.button == 1: # 按左键
                 x, y = event.pos[0], event.pos[1]
+                if 650 < x < 790 and 350 < y < 380:
+                    mode[0] = 1 -  mode[0]
                 for i in range(4, 19):
                     for j in range(4, 19):
                         # 如果点击的位置无棋子，游戏运行中，且当前落子方为人类玩家
@@ -670,12 +692,12 @@ def key_control(screen, mode):
                             chessindex[i][j] = index
                             index += 1
                             if win(lst,i,j):
+                                print("GG!")
                                 draw_AI_takeover(screen,0)
                                 victor_sound.play(0)
-                                pygame.display.update()
                                 displaywin(screen,wincolor,lst,chessindex,index)
                             # 将电脑方操作放在了这里，是为了防止误触。即当人类方落子无效时，电脑方便不会行动。
-                            if not mode and running:
+                            if not mode[0] and running:
                                 print ("Calculating next move...")
                                 a = alphabeta(lst,3,ninf,pinf,int(not color),int(not color))
                                 repent = True
@@ -688,10 +710,11 @@ def key_control(screen, mode):
                                 chessindex[a[0]][a[1]] = index
                                 index += 1
                                 if win(lst,a[0],a[1]):
+                                    print("GG!")
                                     draw_AI_takeover(screen,0)
                                     victor_sound.play(0)
                                     displaywin(screen,wincolor,lst,chessindex,index)
-                            if mode and running: 
+                            if mode[0] and running: 
                                 order = not order
                             break
                     else:
@@ -700,14 +723,16 @@ def key_control(screen, mode):
 
                 # 如果点击悔棋
                 if 650 < x < 730 and 440 < y < 490 and running and repent:
-                    if not mode: # 如果是人人对战
+                    if not mode[0]: # 如果是人人对战
                         lst[i_temp1][j_temp1] = 'Y'
                         lst[i_temp2][j_temp2] = 'Y'
-                    elif mode:
+                    elif mode[0]:
                         lst[i_temp1][j_temp1] = 'Y'
                         order = not order
                     draw_chessboard_with_chessman(lst, screen)
-            choose_button(x, y)
+
+                choose_button(x, y)
+
         # 点X也退出游戏
         elif event.type == QUIT:
             pygame.quit()
@@ -717,7 +742,7 @@ def key_control(screen, mode):
 def main():
     # 定义全局变量
     global background, checkerboard, button, order, lst, score, running, background_jpg, wincolor, i_temp1, j_temp1, \
-        i_temp2, j_temp2, choose_turn_result, index, chessindex, load, repent, i_temp3, j_temp3
+        i_temp2, j_temp2, choose_turn_result, index, chessindex, load, repent, i_temp3, j_temp3,mode
     pygame.init()
     screen = pygame.display.set_mode((800, 624))
     background_jpg = pygame.image.load('wuziqi/Background.jpg')
@@ -746,10 +771,11 @@ def main():
     # 选择电脑先手还是玩家先手
     choose_turn_result = 0
     # 选择人人还是人机
-    mode, load = choose_mode()
+    mode = [1]
+    mode[0], load = choose_mode()
     background_music.play(-1) # -1是循环播放
 
-    if not mode: # 人人对战
+    if not mode[0]: # 人人对战
         choose_turn_result = choose_turn(screen) #选择先手
     if load:
         try:
