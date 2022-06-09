@@ -41,7 +41,7 @@ button_sound.set_volume(0.2)
 victor_sound = pygame.mixer.Sound("music/victory.wav")
 victor_sound.set_volume(1)
 background_music = pygame.mixer.Sound("music/Bgm.wav")
-background_music.set_volume(0.3)
+background_music.set_volume(0)
 pygame.display.set_caption('五子不行V2')
 
 # 定义极限
@@ -148,7 +148,10 @@ def choose_save(screen,chesslist, chessindex, index):
                         except:
                             print_message(screen,"Save Failed!")
                         else:
-                            print_message(screen,"Save Succeeded!")
+                            draw_chessboard_with_chessman(chesslist, screen)
+                            print_message(screen,"Save Successful!")
+                            pygame.time.wait(1000)
+                            main()
                     choose_button(x, y)
 
 
@@ -327,6 +330,8 @@ def play_chess(screen, chessmap):
                         draw_chessboard_with_chessman(Chessmap[k], screen)
                         play_chess_sound.play(0)
                         temp_color = 1-temp_color
+                        if k == k_max:
+                            victor_sound.play(0)
                         
 
             if event.type == MOUSEBUTTONDOWN :
@@ -349,7 +354,7 @@ def play_chess(screen, chessmap):
                         play_chess_sound.play(0)
 
                     if 650 < x < 790 and 350 < y < 380:   # AI落子
-                        print_message (screen,"让Alex来帮您吧!")
+                        print_message (screen,"Alex思考中...")
                         pygame.display.update()
                         if(flag):
                             ktmpcolor = temp_color
@@ -451,7 +456,7 @@ def judgepoint(evalst,act):
     elif SCORE_THREE_COUNT_B > 1 or SCORE_THREE_COUNT_W > 1:
         return 1500
     elif SCORE_SFOUR_COUNT_B > 0 or SCORE_SFOUR_COUNT_W > 0:
-        return 1000
+        return SCORE_SFOUR
     elif SCORE_THREE_COUNT_B > 0  or SCORE_THREE_COUNT_W> 0:
         return 100
 
@@ -709,8 +714,8 @@ def displaywin(screen,wincolor,chesslist,chessindex,index):
     '''
     显示胜利界面
     '''
-    pop_window(screen, wincolor) # 弹出胜利的界面
     draw_chessboard_with_chessman(chesslist,screen)
+    pop_window(screen, wincolor) # 弹出胜利的界面
     draw_AI_takeover(screen,0)
     pygame.display.update()
     choose_save(screen,chesslist, chessindex, index) # 激活保存按钮
@@ -744,6 +749,10 @@ def key_control(screen, mode):
                 x, y = event.pos[0], event.pos[1]
                 if 650 < x < 790 and 350 < y < 380:
                     mode[0] = 1 -  mode[0]
+                    tip(screen, lst, color, mode[0], i_temp1, j_temp1, i_temp2, j_temp2)
+                    draw_AI_takeover(screen,1)
+                    print_message(screen,"切换成功！")
+                    pygame.time.wait(500)
                 for i in range(4, 19):
                     for j in range(4, 19):
                         # 如果点击的位置无棋子，游戏运行中，且当前落子方为人类玩家
@@ -764,7 +773,7 @@ def key_control(screen, mode):
                                 displaywin(screen,wincolor,lst,chessindex,index)
                             # 将电脑方操作放在了这里，是为了防止误触。即当人类方落子无效时，电脑方便不会行动。
                             if not mode[0] and running:
-                                print_message(screen,"Pending...")
+                                print_message(screen,"Alex思考中...")
                                 a = alphabeta(lst,3,ninf,pinf,int(not color),int(not color))
                                 repent = True
                                 draw_chessman(a[0], a[1], screen,not color)
@@ -776,7 +785,6 @@ def key_control(screen, mode):
                                 chessindex[a[0]][a[1]] = index
                                 index += 1
                                 if win(lst,a[0],a[1]):
-                                    draw_AI_takeover(screen,0)
                                     victor_sound.play(0)
                                     displaywin(screen,wincolor,lst,chessindex,index)
                             if mode[0] and running: 
@@ -845,11 +853,12 @@ def main():
     if load:
         try:
             c_map = load_chess(screen) # 读取棋谱
-            print_message(screen,"Open Succeeded!") 
+            print_message(screen,"Open Successful!") 
             play_chess(screen, c_map)
             main()
         except:
             print_message(screen,"Open Failed!")
+            pygame.time.wait(1000)
             main()
     
     while True:
