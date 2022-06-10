@@ -2,7 +2,7 @@
     Name:DeltaGobang
     Function:五子棋游戏主程序,支持人人/人机对战/保存棋谱/悔棋
     Author:吴霄鹤
-    Last edit at: 2022-06-09
+    Last edit at: 2022-06-10
 '''
 from asyncio.windows_events import NULL
 from re import S
@@ -16,11 +16,9 @@ from tkinter import *
 import os
 
 # define absolute path
-# def resource_path(relative): 
-#     if hasattr(sys, "_MEIPASS"): 
-#         absolute_path = os.path.join(sys._MEIPASS, relative)
-#     else: absolute_path = os.path.join(relative)
-#     return absolute_path
+def resource_path(relative): 
+    absolute_path = os.path.join(relative)
+    return absolute_path
 '''
     加载图片和背景音乐
 '''
@@ -31,17 +29,17 @@ RED = (255, 0, 0)
 background = (201, 202, 187)
 checkerboard = (80, 80, 80)
 button = (52, 53, 44)
-black_chessman = pygame.image.load('image/Black_chess.png')
-white_chessman = pygame.image.load('image/White_chess.png')
+black_chessman = pygame.image.load(resource_path('image\\Black_chess.png'))
+white_chessman = pygame.image.load(resource_path('image\\White_chess.png'))
 # 音乐
-play_chess_sound = pygame.mixer.Sound("music/play_chess.wav")
+play_chess_sound = pygame.mixer.Sound(resource_path("music\\play_chess.wav"))
 play_chess_sound.set_volume(0.2)
-button_sound = pygame.mixer.Sound("music/button.wav")
+button_sound = pygame.mixer.Sound(resource_path("music\\button.wav"))
 button_sound.set_volume(0.2)
-victor_sound = pygame.mixer.Sound("music/victory.wav")
+victor_sound = pygame.mixer.Sound(resource_path("music\\victory.wav"))
 victor_sound.set_volume(1)
-background_music = pygame.mixer.Sound("music/Bgm.wav")
-background_music.set_volume(0)
+background_music = pygame.mixer.Sound(resource_path("music\\Bgm.wav"))
+background_music.set_volume(0.3)
 pygame.display.set_caption('五子不行V2')
 
 # 定义极限
@@ -818,7 +816,7 @@ def main():
         i_temp2, j_temp2, choose_turn_result, index, chessindex, load, repent, i_temp3, j_temp3,mode
     pygame.init()
     screen = pygame.display.set_mode((800, 624))
-    background_jpg = pygame.image.load('image/Background.jpg')
+    background_jpg = pygame.image.load(resource_path('image\\Background.jpg'))
     screen.fill(background)
     screen.blit(background_jpg, (0, 0))
     # order = False时黑棋先手
@@ -846,6 +844,7 @@ def main():
     # 选择人人还是人机
     mode = [1]
     mode[0], load = choose_mode()
+    background_music.stop()
     background_music.play(-1) # -1是循环播放
 
     if not mode[0]: # 人人对战
