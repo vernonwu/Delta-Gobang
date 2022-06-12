@@ -38,11 +38,11 @@ While in game, press F1 to mute.
 
 
 
-1. *Press the "Human versus Human" button at the top-left of the main menu.*
+1. Press the "Human versus Human" button at the top-left of the main menu.
 
-2. *Hover over the position where you want to drop the chess and **left click** on the mouse to perform a chess move.*
+2. Hover over the position where you want to drop the chess and **left click** on the mouse to perform a chess move.
 
-3. *At the end of the game, you can **save/return to** the main menu by clicking on the game as desired.*
+3. At the end of the game, you can **save/return to** the main menu by clicking on the game as desired.
 
    
 
@@ -50,19 +50,19 @@ While in game, press F1 to mute.
 
 
 
-1. *Press the "Human versus Machines" button at the top-left of the main menu.*
+1. Press the "Human versus Machines" button at the top-left of the main menu.
 
-2. *Choose Turns.* 
+2. Choose Turns. 
 
-3. *It usually takes AI 5-10 seconds to figure out their moves, so please be patient!*
+3. It usually takes AI 5-10 seconds to figure out their moves, so please be patient!
 
-4. *At the end of the game, you can save/return to the main menu by clicking on the game as desired.*
+4. At the end of the game, you can save/return to the main menu by clicking on the game as desired.
 
    
 
 ### Mode Switch
 
-*The game mode can be switched at any time during the game (PVE/PVP).*
+The game mode can be switched at any time during the game (PVE/PVP).
 
 
 
