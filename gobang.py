@@ -304,7 +304,7 @@ def play_chess(screen, chessmap):
 
         pygame.draw.rect(screen, button, [640, 340, 140, 50], 5)
         s_font = pygame.font.Font('font1.ttf', 30)
-        text = s_font.render("ALEX推荐", True, button) # 命名参考Amazon公司的语音助手Alexa,并且Alex是常见的男性名（MC的男性角色名），富有亲和力。
+        text = s_font.render("ALEX推荐", True, button) # 命名参考Amazon公司的语音助手Alexa,并且Alex是常见的男性名（MC的女性角色名），富有亲和力。
         screen.blit(text, (650, 350))
         pygame.display.update()
         
