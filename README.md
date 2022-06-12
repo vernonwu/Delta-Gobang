@@ -22,8 +22,6 @@ DeltaGobang（中文名：五子不行），是一款面向小众的 (bushi) 入
 
 ## 使用方式 Usage
 
-
-
 直接双击exe文件运行即可。
 
 *Simply double-click the exe file to run it directly.*
@@ -31,14 +29,6 @@ DeltaGobang（中文名：五子不行），是一款面向小众的 (bushi) 入
 
 
 ## 基础功能 Basic Functions
-
-### 初始界面/主菜单 Main Menu
-
-
-
-![初始界面](.\fig\初始界面.png)
-
-
 
 ### 人人对战/PVP
 
@@ -88,12 +78,6 @@ DeltaGobang（中文名：五子不行），是一款面向小众的 (bushi) 入
 
 ### 切换模式
 
-
-
-![switch](.\fig\switch.png)
-
-
-
 在对局中可以随时切换对局模式 (PVE/PVP).
 
 *The game mode can be switched at any time during the game (PVE/PVP).*
@@ -102,19 +86,13 @@ DeltaGobang（中文名：五子不行），是一款面向小众的 (bushi) 入
 
 ### 播放棋谱
 
-
-
-![load](.\fig\load.png)
-
-
-
 点击“载入棋谱”，可以复盘过往对局保存的棋谱。目前**暂不支持**外部棋谱。
 
 *Click on "Load Game" to review the saved previous games. External games are not currently supported.*
 
 
 
-播放通过“前一步/后一步” 或方向键“<img src=".\fig\left.png" alt="left" style="zoom:10%;" /><img src=".\fig\right.png" alt="right" style="zoom:10%;" />”控制。
+播放通过“前一步/后一步” 或方向键“<-/->”控制。
 
 *Playback is controlled by "step forward/step back" or the arrow keys "left/right"。*
 
