@@ -20,7 +20,7 @@ Currently the basic gobang rule with no forbidden moves is used, and five pieces
 
 ## Quick Start
 
-Method 1: Simply double-click the .exe file of a preffered version to run it directly.
+Method 1: Simply double-click the .exe file of a preffered version to run it directly after making sure it is under the same root as the two folders "**image**" and "**music**".
 
 Method 2: To interpret the sourcecode, see requirements of needed libraries in requirements.txt. Install with
 

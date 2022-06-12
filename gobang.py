@@ -48,7 +48,7 @@ ninf = float('-inf')
 
 def print_message(screen,text):
     """打印文字"""
-    font = pygame.font.Font('font1.ttf', 20)
+    font = pygame.font.Font(resource_path('fonts\\font1.ttf'), 20)
     text = font.render(text, True, button)
     screen.blit(text, (640, 190))
     pygame.display.update()
@@ -83,8 +83,8 @@ def draw_chessboard(screen):
     pygame.draw.rect(screen, button, [720, 295, 60, 30], 3)
 
 
-    s_font = pygame.font.Font('font1.ttf', 30)
-    d_font = pygame.font.Font('font1.ttf', 20)
+    s_font = pygame.font.Font(resource_path('fonts\\font1.ttf'), 30)
+    d_font = pygame.font.Font(resource_path('fonts\\font1.ttf'), 20)
     text1 = s_font.render("人人对战", True, button)
     text2 = s_font.render("人机对战", True, button)
     text3 = s_font.render("悔棋", True, button)
@@ -125,7 +125,7 @@ def draw_chessboard_with_chessman(chesslist, screen):
 def draw_AI_takeover(screen,flag):
     """绘制托管按钮,复用为保存按钮"""
     pygame.draw.rect(screen, button, [640, 340, 140, 50], 5)
-    s_font = pygame.font.Font('font1.ttf', 30)
+    s_font = pygame.font.Font(resource_path('fonts\\font1.ttf'), 30)
     if(flag):
         text = s_font.render("切换模式", True, button)
     else:
@@ -159,7 +159,7 @@ def choose_turn(screen):
     """
     pygame.draw.rect(screen, button, [640, 130, 100, 30], 3)
     pygame.draw.rect(screen, button, [640, 170, 100, 30], 3)
-    s_font = pygame.font.Font('font1.ttf', 25)
+    s_font = pygame.font.Font(resource_path('fonts\\font1.ttf'), 25)
     text1 = s_font.render("电脑先手", True, button)
     text2 = s_font.render("玩家先手", True, button)
     screen.blit(text1, (640, 130))
@@ -303,7 +303,7 @@ def play_chess(screen, chessmap):
     while True:
 
         pygame.draw.rect(screen, button, [640, 340, 140, 50], 5)
-        s_font = pygame.font.Font('font1.ttf', 30)
+        s_font = pygame.font.Font(resource_path('fonts\\font1.ttf'), 30)
         text = s_font.render("ALEX推荐", True, button) # 命名参考Amazon公司的语音助手Alexa,并且Alex是常见的男性名（MC的女性角色名），富有亲和力。
         screen.blit(text, (650, 350))
         pygame.display.update()
@@ -394,13 +394,13 @@ def pop_window(screen, color):
     """
     if not color:
         pygame.draw.rect(screen, RED, [110, 230, 400, 160], 5)
-        s_font = pygame.font.Font('font1.ttf', 80)
+        s_font = pygame.font.Font(resource_path('fonts\\font1.ttf'), 80)
         text1 = s_font.render("黑棋胜利!", True, RED)
         screen.blit(text1, (120, 270))
         pygame.display.update()
     elif color:
         pygame.draw.rect(screen, RED, [110, 230, 400, 160], 5)
-        s_font = pygame.font.Font('font1.ttf', 80)
+        s_font = pygame.font.Font(resource_path('fonts\\font1.ttf'), 80)
         text1 = s_font.render("白棋胜利!", True, RED)
         screen.blit(text1, (120, 270))
         pygame.display.update()
@@ -411,10 +411,10 @@ def tip(screen, chesslist, color, choose, i1, j1, i2, j2):
 
     当前是什么模式,轮到谁落子,谁赢了
     """
-    s_font = pygame.font.Font('font.ttf', 40)
+    s_font = pygame.font.Font(resource_path('fonts\\font.ttf'), 40)
     text1 = s_font.render("黑棋落子", True, button)
     text2 = s_font.render("白棋落子", True, button)
-    s_font1 = pygame.font.Font('font1.ttf', 30)
+    s_font1 = pygame.font.Font(resource_path('fonts\\font1.ttf'), 30)
     text3 = s_font1.render("人人对战", True, button, (100, 100, 100))
     text4 = s_font1.render("人机对战", True, button, (100, 100, 100))
     draw_chessboard_with_chessman(chesslist, screen)
