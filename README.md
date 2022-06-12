@@ -90,7 +90,7 @@ DeltaGobang（中文名：五子不行），是一款面向小众的 (bushi) 入
 
 
 
-![switch](D:\Study\College\F2\python\homework\帮助文档\fig\switch.png)
+![switch](.\fig\switch.png)
 
 
 
@@ -104,7 +104,7 @@ DeltaGobang（中文名：五子不行），是一款面向小众的 (bushi) 入
 
 
 
-![load](D:\Study\College\F2\python\homework\帮助文档\fig\load.png)
+![load](.\fig\load.png)
 
 
 
@@ -114,7 +114,7 @@ DeltaGobang（中文名：五子不行），是一款面向小众的 (bushi) 入
 
 
 
-播放通过“前一步/后一步” 或方向键“<img src="D:\Study\College\F2\python\homework\帮助文档\fig\left.png" alt="left" style="zoom:10%;" /><img src="D:\Study\College\F2\python\homework\帮助文档\fig\right.png" alt="right" style="zoom:10%;" />”控制。
+播放通过“前一步/后一步” 或方向键“<img src=".\fig\left.png" alt="left" style="zoom:10%;" /><img src=".\fig\right.png" alt="right" style="zoom:10%;" />”控制。
 
 *Playback is controlled by "step forward/step back" or the arrow keys "left/right"。*
 
