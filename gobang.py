@@ -4,8 +4,8 @@
     Author:吴霄鹤
     Last edit at: 2022-06-10
 '''
-from asyncio.windows_events import NULL
-from re import S
+# from asyncio.windows_events import NULL
+import time
 import pygame
 from pygame.locals import *
 import sys
@@ -357,7 +357,10 @@ def play_chess(screen, chessmap):
                         if(flag):
                             ktmpcolor = temp_color
                             flag = 0
+                        time1 = time.time()
                         a = alphabeta(Chessmap[k],3,ninf,pinf,ktmpcolor,ktmpcolor)
+                        time2 = time.time()
+                        print('Thought Process Lasted %.0f ms' % (1000*(time2-time1)))
                         play_chess_sound.play(0)
                         Chessmap[k][a[0]][a[1]] = ktmpcolor
                         draw_chessman(a[0], a[1], screen, ktmpcolor)
@@ -718,7 +721,7 @@ def displaywin(screen,wincolor,chesslist,chessindex,index):
     pygame.display.update()
     choose_save(screen,chesslist, chessindex, index) # 激活保存按钮
 
-def key_control(screen, mode):
+def key_control(screen, mode,background_music):
     """用于接收用户鼠标的信息
 
     """
@@ -739,9 +742,13 @@ def key_control(screen, mode):
     draw_AI_takeover(screen,1)
     # 人类玩家开始落子
     for event in pygame.event.get():
-        if event.type == KEYDOWN and event.key == pygame.K_ESCAPE:
-            pygame.quit()
-            sys.exit()
+        if event.type == KEYDOWN:
+            if event.key == pygame.K_ESCAPE:
+                pygame.quit()
+                sys.exit()
+            elif event.key == pygame.K_F1:
+                background_music.stop()
+
         if event.type == MOUSEBUTTONDOWN:
             if event.button == 1: # 按左键
                 x, y = event.pos[0], event.pos[1]
@@ -772,7 +779,10 @@ def key_control(screen, mode):
                             # 将电脑方操作放在了这里，是为了防止误触。即当人类方落子无效时，电脑方便不会行动。
                             if not mode[0] and running:
                                 print_message(screen,"Alex思考中...")
+                                time1 = time.time()
                                 a = alphabeta(lst,3,ninf,pinf,int(not color),int(not color))
+                                time2 = time.time()
+                                print('Thought Process Lasted %.0f ms' % (1000*(time2-time1)))
                                 repent = True
                                 draw_chessman(a[0], a[1], screen,not color)
                                 play_chess_sound.play(0)
@@ -861,7 +871,7 @@ def main():
             main()
     
     while True:
-        key_control(screen, mode)
+        key_control(screen, mode,background_music)
         pygame.display.update()
 
 
