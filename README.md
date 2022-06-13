@@ -84,9 +84,9 @@ For the test in WIN11, python = 3.10.3:
 
 | Test item                        | Running Time       |
 | -------------------------------- | ------------------ |
-| AI Thinking Time (Opening phase) | $6179 \pm 1000$ ms |
-| AI Thinking Time (Middle game)   | $8292 \pm 1500$ ms |
-| Maximum TIme Recorded            | $14645$ ms         |
+| AI Thinking Time (Opening phase) | $$6179 \pm 1000$$ ms |
+| AI Thinking Time (Middle game)   | $$8292 \pm 1500$$ ms |
+| Maximum TIme Recorded            | $$14645$$ ms         |
 
 
 
