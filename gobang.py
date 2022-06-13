@@ -441,11 +441,11 @@ def judgepoint(evalst,act):
 
     for elem in evalst:
         lfive_count += elem.count("11111")+elem.count("00000") 
-        lfour_count += elem[1:10].count("Y1111Y")+elem[1:10].count("Y0000Y")
-        SCORE_SFOUR_COUNT_B += elem[1:10].count("Y11110")+elem[1:10].count("1Y111")+elem[1:10].count("111Y1")
-        SCORE_SFOUR_COUNT_W += elem[1:10].count("Y00001")+elem[1:10].count("0Y000")+elem[1:10].count("000Y0")
-        SCORE_THREE_COUNT_B += elem[2:9].count("Y111Y") + elem[2:9].count("Y1Y11Y")+elem[2:9].count("Y11Y1Y")
-        SCORE_THREE_COUNT_W += elem[2:9].count("Y000Y") + elem[2:9].count("Y0Y00Y")+elem[2:9].count("Y00Y0Y")
+        lfour_count += elem.count("Y1111Y")+elem.count("Y0000Y")
+        SCORE_SFOUR_COUNT_B += elem.count("Y11110")+elem.count("1Y111")+elem.count("111Y1")+elem.count("01111Y")
+        SCORE_SFOUR_COUNT_W += elem.count("Y00001")+elem.count("0Y000")+elem.count("000Y0")+elem.count("10000Y")
+        SCORE_THREE_COUNT_B += elem[1:8].count("Y111Y") + elem.count("Y1Y11Y")+elem.count("Y11Y1Y")
+        SCORE_THREE_COUNT_W += elem[1:8].count("Y000Y") + elem.count("Y0Y00Y")+elem.count("Y00Y0Y")
 
         if lfive_count > 0 : # 如果有活5
             return SCORE_FIVE
@@ -536,7 +536,7 @@ def alphabeta(board,depth,alpha,beta,color:int,computercolor:int): # 人工智�
             if beta <= alpha: # 如果在某个节点处，对方的最小值小于我方最大，那么对面肯定不会选这一支（因为传的alphabeta值>=alpha）,剪掉这一action.
                 break
         if depth == 3: # 如果是最大深度，则返回最优选择
-            # print ('Maximum score for the computer is %d' % maxEval)
+            print ('Maximum score for the computer is %d' % maxEval)
             return bestAct
         else: # 否则继续搜索
             return maxEval
@@ -639,7 +639,7 @@ class evalBoard():
         if Tup in self.tuple_dict:
             self.tuple_dict[Tup][0] += 0.5
         else:
-            Tup[5] = 3
+            Tup = Tup[:5]+"3" # 错误写法：Tup[6] = 3 'str' object does not support item assignment
             if Tup in self.tuple_dict:
                 self.tuple_dict[Tup][0] += 0.5
 
@@ -680,7 +680,7 @@ class evalBoard():
             return -9040
         elif self.bif[0] > 1 or self.blf[0] > 0: # 黑棋冲四多于1个或黑棋活四
             return 9030
-        elif self.blf[0] > 0 and self.blt[0] > 0: # 黑棋活四和活三，赢
+        elif self.bif[0] > 0 and self.blt[0] > 0: # 黑棋冲四和活三，赢
             return 9020
         elif self.wlt[0] > 0: # 白棋活三，输
             return -9010
