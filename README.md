@@ -82,11 +82,11 @@ Try/AI recommendations are also available during playback.
 
 For the test in WIN11, python = 3.10.3:
 
-| Test item                        | Running Time       |
-| -------------------------------- | ------------------ |
-| AI Thinking Time (Opening phase) | $$6179 \pm 1000$$ ms |
-| AI Thinking Time (Middle game)   | $$8292 \pm 1500$$ ms |
-| Maximum TIme Recorded            | $$14645$$ ms         |
+| Test item                        | Running Time   |
+| -------------------------------- | ---------------|
+| AI Thinking Time (Opening phase) | 6179 ± 1000 ms |
+| AI Thinking Time (Middle game)   | 8292 ± 1500 ms |
+| Maximum TIme Recorded            | 14645 ms       |
 
 
 
