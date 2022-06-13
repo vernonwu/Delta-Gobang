@@ -2,7 +2,7 @@
 '''
 import display
 import init_
-import main
+import Gobang_main
 import win32ui
 import copy
 import sys
@@ -27,7 +27,7 @@ def choose_save(screen,chesslist, chessindex, index):
                             display.draw_chessboard_with_chessman(chesslist, screen)
                             display.print_message(screen,"Save Successful!")
                             pygame.time.wait(1000)
-                            main()
+                            Gobang_main.main()
                     choose_button(x, y)
 
 
@@ -89,7 +89,7 @@ def choose_button(x, y):
         # 播放音效
         init_.button_sound.play(0)
         # 重新开始
-        main()
+        Gobang_main.main()
 
     # 点击‘退出游戏’,退出游戏
     elif 650 < x < 790 and 560 < y < 610:
