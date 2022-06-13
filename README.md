@@ -34,7 +34,7 @@ pip install -r requirements.txt
 
 ## Basic Functions
 
-While in game, press F1 to mute.
+While in game, press **F1 to mute**.
 
 ### PVP
 
