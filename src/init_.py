@@ -2,11 +2,13 @@
 '''
 import pygame
 import os
+
 pygame.init()
 # define absolute path
 def resource_path(relative): 
     absolute_path = os.path.join(relative)
     return absolute_path
+    
 BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
 RED = (255, 0, 0)

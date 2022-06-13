@@ -1,3 +1,5 @@
+'''人工智能(大嘘)
+'''
 import init_
 import copy
 import numpy as np

@@ -1,3 +1,5 @@
+'''操作清单
+'''
 import display
 import init_
 import main
@@ -8,6 +10,7 @@ import pygame
 import chess_AI
 import time
 from pygame.locals import *
+
 def choose_save(screen,chesslist, chessindex, index):
     """保存棋谱的按钮"""
     while True:
