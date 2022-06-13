@@ -686,8 +686,8 @@ class evalBoard():
             return -9010
         elif self.blt[0] > 1: # 黑棋双活三，白棋无活三，赢
             return 9000
-        elif self.wdf[0] > 0: # 白棋死四，惩罚
-            return -100*(self.wdf[0])
+        # elif self.wdf[0] > 0: # 最初防止遇三不堵，白棋死四，惩罚
+        #     return -100*(self.wdf[0])
         else:
             return max(-99,(self.blt[0]-self.wlt[0])*5+(self.bst[0]-self.wst[0]))
 

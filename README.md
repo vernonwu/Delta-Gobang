@@ -24,15 +24,13 @@ Method 1:
 
 Make sure to first turn off your **anti-virus softwares** to prevent the .exe file from being isolated/blocked!
 
-Simply double-click the .exe file of a preffered version to run it directly after making sure it is under the **same root** as the three folders "**fonts**", **image**" and "**music**". 
+Simply check the "Released Version" folder and double-click the .exe file of your preffered version to run it directly after making sure it is under the **same root** as the three folders "**fonts**", **image**" and "**music**". Note that each version will be equipped with a **user manual** for you to get acquainted with the software. 
 
 Method 2: To interpret the sourcecode, see requirements of needed libraries in requirements.txt. Install with
 
 ```bash
 pip install -r requirements.txt
 ```
-
-
 
 ## Basic Functions
 
@@ -87,8 +85,8 @@ For the test in WIN11, python = 3.10.3:
 | Test item                        | Running Time       |
 | -------------------------------- | ------------------ |
 | AI Thinking Time (Opening phase) | $6179 \pm 1000$ ms |
-| AI Thinking Time (Middle game)   | $8292 \pm 1000$ ms |
-| Maximum TIme Recorded            | $10221$ ms         |
+| AI Thinking Time (Middle game)   | $8292 \pm 1500$ ms |
+| Maximum TIme Recorded            | $14645$ ms         |
 
 
 
