@@ -80,7 +80,7 @@ Try/AI recommendations are also available during playback.
 
 ## Test Results
 
-For the test in WIN11, python = 3.10.3:
+For the test in Windows11, python = 3.10.3:
 
 | Test item                        | Running Time   |
 | -------------------------------- | -------------- |
