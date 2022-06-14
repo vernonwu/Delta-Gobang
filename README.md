@@ -3,7 +3,7 @@
 ## Introduction
 
 DeltaGobang is an entry-level chess software that provides several basic functions centered around the game of Gobang.
-
+Watch demo at https://www.bilibili.com/video/BV1oa411L7SH.
 
 
 ## Versions
